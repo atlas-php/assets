@@ -27,7 +27,8 @@ final class ConfigTest extends TestCase
             config('atlas-assets.path.pattern')
         );
         self::assertNull(config('atlas-assets.path.resolver'));
-        self::assertSame('assets', config('atlas-assets.tables.assets'));
+        self::assertSame('atlas_assets', config('atlas-assets.tables.assets'));
+        self::assertNull(config('atlas-assets.database.connection'));
     }
 
     public function test_validates_configuration_when_defaults_are_used(): void

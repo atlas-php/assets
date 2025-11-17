@@ -5,7 +5,7 @@ This roadmap translates the Atlas Assets PRD into a practical implementation pla
 ## Phase 1 — Package Foundation
 
 * Scaffold the Composer package (namespace, service provider, config publishing) following AGENTS.md.
-* Define base configuration (`config/atlas-assets.php`) with disk, visibility, deletion behavior, table name overrides, and path resolver placeholders.
+* Define base configuration (`config/atlas-assets.php`) with disk, visibility, deletion behavior, table name overrides, database connection selection, and path resolver placeholders.
 * Document installation instructions and contribution requirements.
 
 ## Phase 2 — Database Schema & Model

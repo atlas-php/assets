@@ -194,14 +194,18 @@ Key options include:
 
 ```php
 return [
-    'disk' => env('ASSETS_DISK', 's3'),
+    'disk' => env('ATLAS_ASSETS_DISK', 's3'),
 
-    'visibility' => env('ASSETS_VISIBILITY', 'public'),
+    'visibility' => env('ATLAS_ASSETS_VISIBILITY', 'public'),
 
-    'delete_files_on_soft_delete' => env('ASSETS_DELETE_ON_SOFT_DELETE', false),
+    'delete_files_on_soft_delete' => env('ATLAS_ASSETS_DELETE_ON_SOFT_DELETE', false),
 
     'tables' => [
-        'assets' => env('ASSETS_TABLE', 'assets'),
+        'assets' => env('ATLAS_ASSETS_TABLE', 'atlas_assets'),
+    ],
+
+    'database' => [
+        'connection' => env('ATLAS_ASSETS_DATABASE_CONNECTION'),
     ],
 
     'path' => [
@@ -220,3 +224,4 @@ Consumers may override:
 * custom callback resolver
 * file deletion behavior
 * database table names for package models
+* database connection overrides
