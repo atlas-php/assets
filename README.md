@@ -15,6 +15,7 @@
 
 ## Overview
 Atlas Assets removes the complexity of file storage by offering one consistent API for every type of upload. Files can be stored on S3, local disks, or any Laravel-supported driver. Each file becomes an `Asset` record containing metadata such as size, path, type, and optional labels or categories.  
+
 It also supports polymorphic relationships, allowing assets to be tied to any model in your application.
 
 ## Installation
