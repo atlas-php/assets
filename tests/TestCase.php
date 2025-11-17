@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Tests;
 
 use Atlas\Assets\Providers\AtlasAssetsServiceProvider;
+use Illuminate\Foundation\Testing\WithFaker;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 /**
@@ -15,6 +16,8 @@ use Orchestra\Testbench\TestCase as Orchestra;
  */
 abstract class TestCase extends Orchestra
 {
+    use WithFaker;
+
     protected function setUp(): void
     {
         parent::setUp();
