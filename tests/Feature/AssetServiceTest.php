@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
+use RuntimeException;
 
 /**
  * Class AssetServiceTest
@@ -71,6 +73,26 @@ final class AssetServiceTest extends TestCase
 
         self::assertSame(255, strlen($asset->original_file_name));
         self::assertSame($asset->original_file_name, $asset->name);
+    }
+
+    public function test_upload_throws_when_file_stream_cannot_open(): void
+    {
+        $service = $this->app->make(AssetService::class);
+
+        $file = Mockery::mock(UploadedFile::class);
+        $file->shouldReceive('getRealPath')->andReturn('');
+        $file->shouldReceive('getClientMimeType')->andReturn('text/plain');
+        $file->shouldReceive('getMimeType')->andReturn('text/plain');
+        $file->shouldReceive('getSize')->andReturn(10);
+        $file->shouldReceive('getClientOriginalExtension')->andReturn('txt');
+        $file->shouldReceive('extension')->andReturn('txt');
+        $file->shouldReceive('getClientOriginalName')->andReturn('failed.txt');
+        $file->shouldReceive('getFilename')->andReturn('failed.txt');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to open uploaded file stream.');
+
+        $service->upload($file);
     }
 
     public function test_upload_for_model_persists_model_metadata(): void
@@ -152,6 +174,8 @@ final class AssetServiceTest extends TestCase
 
     public function test_update_with_file_replaces_existing_file(): void
     {
+        Storage::fake('s3');
+
         $asset = Asset::factory()->create([
             'file_path' => 'files/old.doc',
             'name' => 'Old.doc',

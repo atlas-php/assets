@@ -85,3 +85,15 @@ PathConfigurator::clear();
 
 ## License
 MIT — see [LICENSE](./LICENSE).
+
+## Quality Assurance
+
+Before opening a PR or tagging a release, run:
+
+```bash
+./vendor/bin/pint
+composer test
+composer analyse
+```
+
+CI should execute the same trio to ensure formatting, tests, and static analysis stay green.

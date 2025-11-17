@@ -131,7 +131,13 @@ class AssetService
         $visibility = (string) $this->config->get('atlas-assets.visibility', 'public');
         $path = $this->pathResolver->resolve($file, $model, $attributes);
 
-        $stream = fopen($file->getRealPath(), 'rb');
+        $realPath = $file->getRealPath();
+
+        if (! is_string($realPath) || $realPath === '') {
+            throw new RuntimeException('Failed to open uploaded file stream.');
+        }
+
+        $stream = fopen($realPath, 'rb');
 
         if ($stream === false) {
             throw new RuntimeException('Failed to open uploaded file stream.');

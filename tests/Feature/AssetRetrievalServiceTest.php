@@ -10,6 +10,7 @@ use Atlas\Assets\Tests\TestCase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 /**
  * Class AssetRetrievalServiceTest
@@ -97,6 +98,19 @@ final class AssetRetrievalServiceTest extends TestCase
         $service = $this->app->make(AssetRetrievalService::class);
 
         self::assertSame('content', $service->download($asset));
+    }
+
+    public function test_download_throws_when_file_missing(): void
+    {
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/missing.txt',
+        ]);
+
+        $service = $this->app->make(AssetRetrievalService::class);
+
+        $this->expectException(RuntimeException::class);
+
+        $service->download($asset);
     }
 
     public function test_exists_checks_disk(): void

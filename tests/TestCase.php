@@ -6,6 +6,7 @@ namespace Atlas\Assets\Tests;
 
 use Atlas\Assets\Providers\AtlasAssetsServiceProvider;
 use Illuminate\Foundation\Testing\WithFaker;
+use Mockery;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 /**
@@ -48,5 +49,12 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+
+        parent::tearDown();
     }
 }

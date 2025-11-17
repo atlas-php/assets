@@ -60,7 +60,10 @@ class AssetRetrievalService
 
     public function download(Asset $asset): string
     {
-        return $this->disk()->get($asset->file_path);
+        $disk = $this->disk();
+        $this->guardFileExists($disk, $asset);
+
+        return $disk->get($asset->file_path);
     }
 
     public function exists(Asset $asset): bool
@@ -71,6 +74,8 @@ class AssetRetrievalService
     public function temporaryUrl(Asset $asset, int $minutes = 5): string
     {
         $disk = $this->disk();
+
+        $this->guardFileExists($disk, $asset);
 
         if ($this->supportsTemporaryUrls($disk)) {
             try {
@@ -115,10 +120,19 @@ class AssetRetrievalService
 
     private function inlineDataUrl(Filesystem $disk, Asset $asset): string
     {
+        $this->guardFileExists($disk, $asset);
+
         $contents = $disk->get($asset->file_path);
         $base64 = base64_encode($contents);
         $mime = $asset->file_type ?: 'application/octet-stream';
 
         return sprintf('data:%s;base64,%s', $mime, $base64);
+    }
+
+    private function guardFileExists(Filesystem $disk, Asset $asset): void
+    {
+        if (! $disk->exists($asset->file_path)) {
+            throw new RuntimeException(sprintf('Asset file [%s] not found on disk.', $asset->file_path));
+        }
     }
 }
