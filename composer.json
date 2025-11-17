@@ -22,7 +22,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Atlas\\Assets\\Tests\\": "tests/"
+            "Atlas\\Assets\\Tests\\": "tests/",
+            "Atlas\\Assets\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {

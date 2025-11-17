@@ -15,6 +15,14 @@ use Orchestra\Testbench\TestCase as Orchestra;
  */
 abstract class TestCase extends Orchestra
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('atlas-assets.tables.assets', 'atlas_assets');
+        config()->set('atlas-assets.database.connection', null);
+    }
+
     /**
      * @return array<int, class-string>
      */
@@ -23,5 +31,19 @@ abstract class TestCase extends Orchestra
         return [
             AtlasAssetsServiceProvider::class,
         ];
+    }
+
+    /**
+     * @param  \Illuminate\Foundation\Application  $app
+     */
+    protected function getEnvironmentSetUp($app): void
+    {
+        $app['config']->set('database.default', 'testbench');
+
+        $app['config']->set('database.connections.testbench', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
     }
 }

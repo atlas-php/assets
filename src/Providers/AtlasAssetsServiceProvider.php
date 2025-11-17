@@ -36,6 +36,8 @@ class AtlasAssetsServiceProvider extends ServiceProvider
         $this->publishes([
             $this->configPath() => config_path('atlas-assets.php'),
         ], 'atlas-assets-config');
+
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
     }
 
     /**
