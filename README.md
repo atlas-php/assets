@@ -37,6 +37,25 @@ By default files are stored under `{model_type}/{model_id}/{file_name}.{extensio
 - **Pattern:** Uses placeholders such as `{file_name}`, `{original_name}`, `{model_type}`, `{model_id}`, `{user_id}`, `{uuid}`, `{random}`, `{date:Y/m}`, and `{extension}` to build deterministic paths.
 - **Resolver:** Provide a closure for full programmatic control. When set, the resolver output takes precedence over the pattern.
 
+Example resolver:
+
+```php
+'path' => [
+    'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
+    'resolver' => static function (?Model $model, UploadedFile $file, array $attributes): string {
+        $owner = $attributes['user_id'] ?? 'anonymous';
+
+        return sprintf(
+            'users/%s/%s/%s.%s',
+            $owner,
+            strtolower(class_basename($model)) ?: 'loose',
+            Str::uuid(),
+            $file->getClientOriginalExtension()
+        );
+    },
+],
+```
+
 If you leave `model_type`/`model_id` unused (the default), files without an associated model are stored at the disk root automatically.
 
 ## License
