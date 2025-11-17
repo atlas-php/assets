@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Providers;
 
 use Atlas\Assets\Services\AssetCleanupService;
+use Atlas\Assets\Services\AssetManager;
 use Atlas\Assets\Services\AssetRetrievalService;
 use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Support\ConfigValidator;
@@ -34,6 +35,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
         $this->app->bind(AssetService::class);
         $this->app->bind(AssetRetrievalService::class);
         $this->app->bind(AssetCleanupService::class);
+        $this->app->singleton(AssetManager::class);
     }
 
     /**

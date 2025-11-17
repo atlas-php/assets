@@ -87,14 +87,18 @@ $new = Assets::replace($asset, $request->file('new_document'));
 ```
 
 ## Updating Labels & Categories
+Update metadata without touching the stored file:
+
 ```php
-Assets::updateLabel($asset, 'receipt');
-Assets::updateCategory($asset, 'purchases');
+Assets::update($asset, [
+    'label' => 'receipt',
+    'category' => 'purchases',
+]);
 ```
 
 ## Renaming an Asset
 ```php
-Assets::rename($asset, 'NewFileName.pdf');
+Assets::update($asset, ['name' => 'NewFileName.pdf']);
 ```
 
 This changes the metadata but **not the storage path** unless a replace occurs.
@@ -137,7 +141,7 @@ $count = Assets::purge();
 ```
 
 ## Also See
-- Overview
-- Full API Reference
-- Installation Guide
-- README
+- [PRD Overview](./Atlas-Assets.md)
+- [Full API Reference](../Full-API.md)
+- [Installation Guide](../Install.md)
+- [README](../../README.md)

@@ -28,7 +28,7 @@ To publish configuration:
 php artisan vendor:publish --tag=atlas-assets-config
 ```
 
-Full installation steps: [Install Guide](./Install-Assets.md)
+Full installation steps: [Install Guide](./docs/Install.md)
 
 ## Uploading Files
 
@@ -77,24 +77,24 @@ $content = Assets::download($asset);
 
 ## Managing Assets
 
+Update metadata:
+```php
+Assets::update($asset, [
+    'name' => 'NewName.pdf',
+    'label' => 'hero',
+    'category' => 'images',
+]);
+```
+
 Replace the underlying file:
 ```php
-$newAsset = Assets::replace($asset, $request->file('new_file'));
+Assets::replace($asset, $request->file('new_file'), ['label' => 'updated']);
 ```
 
-Rename metadata:
-```php
-Assets::rename($asset, 'NewName.pdf');
-```
-
-Soft delete:
+Soft delete and purge:
 ```php
 Assets::delete($asset);
-```
-
-Purge soft-deleted assets:
-```php
-Assets::purge();
+Assets::purge(); // removes all soft deleted assets
 ```
 
 ## Custom Pathing
@@ -122,10 +122,10 @@ PathConfigurator::clear();
 ```
 
 ## Also See
-- [Overview](./Overview.md)
-- [Example Usage](./Example-Usage-Assets.md)
-- [Full API Reference](./Full-API.md)
-- [Install Guide](./Install-Assets.md)
+- [PRD Overview](./docs/PRD/Atlas-Assets.md)
+- [Example Usage](./docs/PRD/Example-Usage.md)
+- [Full API Reference](./docs/Full-API.md)
+- [Install Guide](./docs/Install.md)
 
 ## Contributing
 See the [Contributing Guide](./CONTRIBUTING.md).  

@@ -202,6 +202,32 @@ final class AssetServiceTest extends TestCase
         self::assertSame('updated', $asset->label);
     }
 
+    public function test_replace_alias_updates_file_and_metadata(): void
+    {
+        Storage::fake('s3');
+
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/old.doc',
+            'name' => 'Old.doc',
+            'original_file_name' => 'Old.doc',
+        ]);
+
+        Storage::disk('s3')->put('files/old.doc', 'old');
+
+        $service = $this->app->make(AssetService::class);
+        $service->replace(
+            $asset,
+            UploadedFile::fake()->create('Newest.doc', 50, 'application/msword'),
+            ['name' => 'Newest.doc']
+        );
+
+        $asset->refresh();
+
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('Newest.doc', $asset->name);
+        self::assertSame('Newest.doc', $asset->original_file_name);
+    }
+
     public function test_update_with_file_overwrites_when_path_matches(): void
     {
         config()->set('atlas-assets.path.resolver', static function (): string {

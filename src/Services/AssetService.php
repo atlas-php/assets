@@ -98,6 +98,16 @@ class AssetService
     }
 
     /**
+     * Replace the existing storage object while allowing metadata overrides.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset
+    {
+        return $this->update($asset, $attributes, $file, $model);
+    }
+
+    /**
      * @param  array<string, mixed>  $attributes
      */
     private function persist(UploadedFile $file, ?Model $model, array $attributes): Asset
