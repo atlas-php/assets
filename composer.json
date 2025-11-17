@@ -1,0 +1,44 @@
+{
+    "name": "atlasphp/assets",
+    "description": "Atlas Assets is a standalone Laravel package for centralized asset storage and retrieval.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/filesystem": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.15",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/larastan": "^2.9",
+        "orchestra/testbench": "^8.24|^9.0",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Atlasphp\\Assets\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Atlasphp\\Assets\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Atlasphp\\Assets\\Providers\\AtlasAssetsServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "analyse": "vendor/bin/phpstan analyse",
+        "lint": "vendor/bin/pint",
+        "format": "vendor/bin/pint"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
