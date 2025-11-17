@@ -27,6 +27,7 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
  * @property string $file_path
  * @property int $file_size
  * @property string $name
+ * @property string $original_file_name
  * @property string|null $label
  * @property string|null $category
  */

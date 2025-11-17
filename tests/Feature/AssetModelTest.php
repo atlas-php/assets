@@ -35,6 +35,7 @@ final class AssetModelTest extends TestCase
             'file_path',
             'file_size',
             'name',
+            'original_file_name',
             'label',
             'category',
             'created_at',

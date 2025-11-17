@@ -30,6 +30,7 @@ class AssetFactory extends Factory
             'file_path' => $this->faker->lexify('assets/'.Str::uuid().'/'.$fileName),
             'file_size' => $this->faker->numberBetween(1_024, 5_242_880),
             'name' => $fileName,
+            'original_file_name' => $fileName,
             'label' => $this->faker->optional()->word(),
             'category' => $this->faker->optional()->word(),
         ];

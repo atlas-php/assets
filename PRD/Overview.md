@@ -149,7 +149,7 @@ Assets can exist with no model. Path rules must tolerate null model contexts.
 
 ### Updating & Replacing
 
-* `replace(Asset $asset, UploadedFile $file, bool $deleteOld = true): Asset`
+* `replace(Asset $asset, UploadedFile $file): Asset`
 * `rename(Asset $asset, string $name): Asset`
 * `updateLabel(Asset $asset, ?string $label): Asset`
 * `updateCategory(Asset $asset, ?string $category): Asset`
@@ -180,6 +180,7 @@ Assets can exist with no model. Path rules must tolerate null model contexts.
 | `file_path`  | string             | Stored disk path              |
 | `file_size`  | bigint             | In bytes                      |
 | `name`       | string             | Display name or uploaded name |
+| `original_file_name` | string     | Original client filename      |
 | `label`      | string nullable    | Optional label                |
 | `category`   | string nullable    | Custom category               |
 | `created_at` | timestamp          |                               |

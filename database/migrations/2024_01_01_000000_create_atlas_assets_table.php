@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('file_path');
             $table->unsignedBigInteger('file_size');
             $table->string('name');
+            $table->string('original_file_name');
             $table->string('label')->nullable();
             $table->string('category')->nullable();
             $table->timestamps();

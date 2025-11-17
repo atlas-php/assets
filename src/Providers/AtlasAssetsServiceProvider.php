@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Providers;
 
 use Atlas\Assets\Services\AssetRetrievalService;
-use Atlas\Assets\Services\AssetUploadService;
+use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Support\PathResolver;
 use Illuminate\Support\ServiceProvider;
@@ -30,7 +30,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
 
         $this->app->bind(ConfigValidator::class, static fn () => new ConfigValidator);
         $this->app->bind(PathResolver::class);
-        $this->app->bind(AssetUploadService::class);
+        $this->app->bind(AssetService::class);
         $this->app->bind(AssetRetrievalService::class);
     }
 
