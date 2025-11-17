@@ -15,7 +15,7 @@ return new class extends Migration
 
         $this->schema()->create($tableName, function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('model_type')->nullable();
             $table->unsignedBigInteger('model_id')->nullable();
             $table->string('file_type');

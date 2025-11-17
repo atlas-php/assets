@@ -64,4 +64,30 @@ final class ConfigTest extends TestCase
 
         $validator->validate($config);
     }
+
+    public function test_rejects_configuration_with_invalid_placeholder(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['path']['pattern'] = '{invalid}/path';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported path placeholder');
+
+        $validator->validate($config);
+    }
+
+    public function test_rejects_configuration_with_non_callable_resolver(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['path']['resolver'] = 'not-a-callable';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('path resolver must be a callable');
+
+        $validator->validate($config);
+    }
 }

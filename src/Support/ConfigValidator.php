@@ -15,6 +15,16 @@ use InvalidArgumentException;
  */
 class ConfigValidator
 {
+    private const SUPPORTED_PLACEHOLDERS = [
+        'model_type',
+        'model_id',
+        'user_id',
+        'original_name',
+        'extension',
+        'random',
+        'uuid',
+    ];
+
     /**
      * Validate configuration structure and values.
      *
@@ -40,5 +50,39 @@ class ConfigValidator
         if (! $hasPattern && ! $hasResolver) {
             throw new InvalidArgumentException('A path pattern or resolver callback must be provided.');
         }
+
+        if (isset($path['resolver']) && $path['resolver'] !== null && ! $hasResolver) {
+            throw new InvalidArgumentException('The path resolver must be a callable.');
+        }
+
+        if ($hasPattern) {
+            $this->validatePlaceholders($pattern);
+        }
+    }
+
+    private function validatePlaceholders(string $pattern): void
+    {
+        preg_match_all('/\{([^{}]+)\}/', $pattern, $matches);
+
+        foreach ($matches[1] as $match) {
+            if ($this->isValidPlaceholder($match)) {
+                continue;
+            }
+
+            throw new InvalidArgumentException(sprintf('Unsupported path placeholder [%s] in atlas-assets configuration.', $match));
+        }
+    }
+
+    private function isValidPlaceholder(string $placeholder): bool
+    {
+        if ($placeholder === '') {
+            return false;
+        }
+
+        if (str_starts_with($placeholder, 'date:')) {
+            return strlen(substr($placeholder, 5)) > 0;
+        }
+
+        return in_array($placeholder, self::SUPPORTED_PLACEHOLDERS, true);
     }
 }
