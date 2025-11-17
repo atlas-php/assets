@@ -28,10 +28,10 @@ class AtlasAssetsServiceProvider extends ServiceProvider
             'atlas-assets'
         );
 
-        $this->app->singleton(ConfigValidator::class, static fn () => new ConfigValidator);
-        $this->app->singleton(PathResolver::class);
-        $this->app->singleton(AssetUploadService::class);
-        $this->app->singleton(AssetRetrievalService::class);
+        $this->app->bind(ConfigValidator::class, static fn () => new ConfigValidator);
+        $this->app->bind(PathResolver::class);
+        $this->app->bind(AssetUploadService::class);
+        $this->app->bind(AssetRetrievalService::class);
     }
 
     /**
