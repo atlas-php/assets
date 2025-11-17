@@ -1,99 +1,135 @@
 # Atlas Assets
-**Atlas Assets** is a Laravel package that centralizes file management into a unified system for uploading, organizing, storing, and retrieving assets across any storage backend. It provides dynamic pathing, polymorphic model associations, and a consistent API for working with files—while remaining fully storage-agnostic and optimized for S3-based workflows.
 
----
+**Atlas Assets** is a Laravel package that provides a unified system for uploading, organizing, and retrieving files across any storage backend. It centralizes asset metadata into a single table, supports model associations, and gives you full control over how file paths are generated.
 
-## Contributing
-See the [Contributing Guide](./CONTRIBUTING.md).
+## Table of Contents
+- [Overview](#overview)
+- [Installation](#installation)
+- [Uploading Files](#uploading-files)
+- [Retrieving Files](#retrieving-files)
+- [Managing Assets](#managing-assets)
+- [Custom Pathing](#custom-pathing)
+- [Also See](#also-see)
+- [Contributing](#contributing)
+- [License](#license)
 
-All work must align with PRDs and agent workflow rules defined in [AGENTS.md](./AGENTS.md).
+## Overview
+Atlas Assets removes the complexity of file storage by offering one consistent API for every type of upload. Files can be stored on S3, local disks, or any Laravel-supported driver. Each file becomes an `Asset` record containing metadata such as size, path, type, and optional labels or categories.  
+It also supports polymorphic relationships, allowing assets to be tied to any model in your application.
 
 ## Installation
-Install the package via Composer:
-
 ```bash
 composer require atlas-php/assets
 ```
 
-Laravel auto-discovers the service provider, so no manual registration is required. To customize disk, visibility, path resolution, table names, or database connections, publish the configuration file:
+To publish configuration:
 
 ```bash
 php artisan vendor:publish --tag=atlas-assets-config
 ```
 
-The publish command creates `config/atlas-assets.php`, which contains all default options described in the PRD.
+Full installation steps: [Install Guide](./Install-Assets.md)
 
-### Configuration overview
+## Uploading Files
 
-- **Disk** (`atlas-assets.disk`): defaults to `s3`. Point this to any disk configured in `config/filesystems.php`.
-- **Visibility** (`atlas-assets.visibility`): defaults to `public`. Set to `private` when uploads should be hidden.
-- **Delete on soft delete** (`atlas-assets.delete_files_on_soft_delete`): defaults to `false`. Cleanup services remove files automatically, but this flag is exposed for consumers implementing custom flows.
-
-### Path patterns & resolvers
-
-By default files are stored under `{model_type}/{model_id}/{file_name}.{extension}`. When no model is provided, the placeholders collapse automatically and the file is placed at the disk root (e.g., `document.pdf`). You can change this behavior in `config/atlas-assets.php`:
-
+Basic upload:
 ```php
-'path' => [
-    'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
-    'resolver' => null,
-],
+use Atlas\Assets\Facades\Assets;
+
+$asset = Assets::upload($request->file('document'));
 ```
 
-- **Pattern:** Uses placeholders such as `{file_name}`, `{original_name}`, `{model_type}`, `{model_id}`, `{user_id}`, `{uuid}`, `{random}`, `{date:Y/m}`, and `{extension}` to build deterministic paths.
-- **Resolver:** Provide a closure for full programmatic control. When set, the resolver output takes precedence over the pattern.
-
-Example resolver:
-
+Attach an asset to a model:
 ```php
-'path' => [
-    'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
-    'resolver' => static function (?Model $model, UploadedFile $file, array $attributes): string {
-        $owner = $attributes['user_id'] ?? 'anonymous';
-
-        return sprintf(
-            'users/%s/%s/%s.%s',
-            $owner,
-            strtolower(class_basename($model)) ?: 'loose',
-            Str::uuid(),
-            $file->getClientOriginalExtension()
-        );
-    },
-],
+$asset = Assets::uploadForModel($post, $request->file('image'));
 ```
 
-If you leave `model_type`/`model_id` unused (the default), files without an associated model are stored at the disk root automatically.
+Upload with attributes:
+```php
+$asset = Assets::upload($request->file('file'), [
+    'user_id' => auth()->id(),
+    'label'   => 'cover',
+    'category'=> 'images',
+]);
+```
 
-You can also register a resolver programmatically at runtime:
+## Retrieving Files
 
+Find an asset:
+```php
+$asset = Assets::find($id);
+```
+
+List assets for a model:
+```php
+$images = Assets::listForModel($post);
+```
+
+Temporary URL (S3, Spaces, etc.):
+```php
+$url = Assets::temporaryUrl($asset, 10);
+```
+
+Download file contents:
+```php
+$content = Assets::download($asset);
+```
+
+## Managing Assets
+
+Replace the underlying file:
+```php
+$newAsset = Assets::replace($asset, $request->file('new_file'));
+```
+
+Rename metadata:
+```php
+Assets::rename($asset, 'NewName.pdf');
+```
+
+Soft delete:
+```php
+Assets::delete($asset);
+```
+
+Purge soft-deleted assets:
+```php
+Assets::purge();
+```
+
+## Custom Pathing
+
+Atlas Assets supports both pattern-based pathing and fully custom resolvers.
+
+### Pattern Example
+```php
+'pattern' => '{model_type}/{model_id}/{uuid}.{extension}'
+```
+
+### Callback Example
 ```php
 use Atlas\Assets\Support\PathConfigurator;
 
-PathConfigurator::useCallback(static fn (?Model $model, UploadedFile $file, array $attributes) => sprintf(
-    'users/%s/%s.%s',
-    $attributes['user_id'] ?? 'anon',
-    strtolower(class_basename($model)) ?: 'loose',
+PathConfigurator::useCallback(fn ($model, $file, $attributes) =>
+    'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
     $file->getClientOriginalExtension()
-));
+);
+```
 
-// Or point to a dedicated service class (invokable by default)
-PathConfigurator::useService(CustomResolver::class);
-
-// Revert to the pattern-based resolver
+Revert to default:
+```php
 PathConfigurator::clear();
 ```
 
+## Also See
+- [Overview](./Overview.md)
+- [Example Usage](./Example-Usage-Assets.md)
+- [Full API Reference](./Full-API.md)
+- [Install Guide](./Install-Assets.md)
+
+## Contributing
+See the [Contributing Guide](./CONTRIBUTING.md).  
+All work must align with PRDs and agent workflow rules defined in [AGENTS.md](./AGENTS.md).
+
 ## License
 MIT — see [LICENSE](./LICENSE).
-
-## Quality Assurance
-
-Before opening a PR or tagging a release, run:
-
-```bash
-./vendor/bin/pint
-composer test
-composer analyse
-```
-
-CI should execute the same trio to ensure formatting, tests, and static analysis stay green.
