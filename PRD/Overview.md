@@ -229,3 +229,5 @@ Consumers may override:
 * file deletion behavior
 * database table names for package models
 * database connection overrides
+
+Helpers: `Atlas\Assets\Support\PathConfigurator::useCallback(...)`, `::useService(...)`, and `::clear()` provide runtime control over path resolution without editing config files.

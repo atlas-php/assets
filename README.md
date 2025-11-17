@@ -23,6 +23,12 @@ php artisan vendor:publish --tag=atlas-assets-config
 
 The publish command creates `config/atlas-assets.php`, which contains all default options described in the PRD.
 
+### Configuration overview
+
+- **Disk** (`atlas-assets.disk`): defaults to `s3`. Point this to any disk configured in `config/filesystems.php`.
+- **Visibility** (`atlas-assets.visibility`): defaults to `public`. Set to `private` when uploads should be hidden.
+- **Delete on soft delete** (`atlas-assets.delete_files_on_soft_delete`): defaults to `false`. Cleanup services remove files automatically, but this flag is exposed for consumers implementing custom flows.
+
 ### Path patterns & resolvers
 
 By default files are stored under `{model_type}/{model_id}/{file_name}.{extension}`. When no model is provided, the placeholders collapse automatically and the file is placed at the disk root (e.g., `document.pdf`). You can change this behavior in `config/atlas-assets.php`:
@@ -57,6 +63,25 @@ Example resolver:
 ```
 
 If you leave `model_type`/`model_id` unused (the default), files without an associated model are stored at the disk root automatically.
+
+You can also register a resolver programmatically at runtime:
+
+```php
+use Atlas\Assets\Support\PathConfigurator;
+
+PathConfigurator::useCallback(static fn (?Model $model, UploadedFile $file, array $attributes) => sprintf(
+    'users/%s/%s.%s',
+    $attributes['user_id'] ?? 'anon',
+    strtolower(class_basename($model)) ?: 'loose',
+    $file->getClientOriginalExtension()
+));
+
+// Or point to a dedicated service class (invokable by default)
+PathConfigurator::useService(CustomResolver::class);
+
+// Revert to the pattern-based resolver
+PathConfigurator::clear();
+```
 
 ## License
 MIT — see [LICENSE](./LICENSE).
