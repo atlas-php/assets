@@ -17,6 +17,12 @@ Atlas Assets centralizes file handling so your application doesn’t need to. Ev
 ## Asset Data Model
 Atlas Assets stores all metadata in a single table (default: `atlas_assets`).
 
+Primary Eloquent model: `Atlas\Assets\Models\Asset`
+
+Relationships exposed by the model:
+- `model(): MorphTo` — back-reference to any owning model via the `model_type` / `model_id` columns.
+- `user(): BelongsTo` — optional relationship to the authenticated user model configured in the consuming app.
+
 | Field                     | Summary                          |
 |---------------------------|----------------------------------|
 | `id`                      | Primary key                      |
@@ -30,7 +36,46 @@ Atlas Assets stores all metadata in a single table (default: `atlas_assets`).
 | `label` / `category`      | Optional classification          |
 | Timestamps + soft deletes | Lifecycle fields                 |
 
-Assets can be free‑standing or attached to any model.
+Assets can be free‑standing or attached to any model. When attached, the owning
+model should declare a morph relationship named `model` to match the asset’s
+internal `morphTo` call.
+
+### Example Polymorphic Setup
+
+```php
+use Atlas\Assets\Models\Asset;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+
+class Post extends Model
+{
+    public function assets(): MorphMany
+    {
+        return $this->morphMany(Asset::class, 'model');
+    }
+
+    public function heroImage(): MorphOne
+    {
+        return $this->morphOne(Asset::class, 'model')->where('label', 'hero');
+    }
+}
+
+class Submission extends Model
+{
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Asset::class, 'model')
+            ->where('category', 'submission');
+    }
+}
+```
+
+Each model defines the `morphMany`/`morphOne` relationship using the shared
+`model` morph name. Assets can then be uploaded through the `AssetService` or
+`Assets` facade using `uploadForModel($post, $file)` or
+`uploadForModel($submission, $file)` to automatically populate the polymorphic
+columns.
 
 ## Core Responsibilities
 ### 1. Central Asset Storage
