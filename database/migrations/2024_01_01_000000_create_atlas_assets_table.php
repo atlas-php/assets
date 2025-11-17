@@ -31,6 +31,7 @@ return new class extends Migration
             $table->index(['model_type', 'model_id']);
             $table->index('category');
             $table->index('label');
+            $table->unique('file_path');
         });
     }
 

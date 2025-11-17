@@ -204,6 +204,39 @@ final class AssetServiceTest extends TestCase
             config()->set('atlas-assets.path.resolver', null);
         }
     }
+
+    public function test_upload_rejects_duplicate_file_paths(): void
+    {
+        config()->set('atlas-assets.path.resolver', static fn () => 'fixed/path.txt');
+
+        $service = $this->app->make(AssetService::class);
+        $service->upload(UploadedFile::fake()->create('first.txt', 1));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->upload(UploadedFile::fake()->create('second.txt', 1));
+    }
+
+    public function test_update_rejects_duplicate_file_paths(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+
+        $existing = Asset::factory()->create([
+            'file_path' => 'conflict/path.doc',
+        ]);
+
+        Storage::disk('s3')->put('conflict/path.doc', 'old');
+
+        $asset = Asset::factory()->create();
+
+        config()->set('atlas-assets.path.resolver', static fn () => 'conflict/path.doc');
+
+        $service = $this->app->make(AssetService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->update($asset, [], UploadedFile::fake()->create('new.doc', 1));
+    }
 }
 
 /**

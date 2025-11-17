@@ -12,6 +12,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -89,6 +90,8 @@ class AssetService
             return $asset;
         }
 
+        $this->ensureUniquePath($updates['file_path'] ?? null, $asset->id);
+
         $asset->update($updates);
 
         return $asset->refresh();
@@ -101,6 +104,8 @@ class AssetService
     {
         /** @var array{path: string, type: string, size: int, original_name: string} $fileData */
         $fileData = $this->storeFile($file, $model, $attributes);
+
+        $this->ensureUniquePath($fileData['path']);
 
         return Asset::query()->create([
             'user_id' => $attributes['user_id'] ?? null,
@@ -175,5 +180,21 @@ class AssetService
         }
 
         return Str::limit($string, $limit, '');
+    }
+
+    private function ensureUniquePath(?string $path, ?int $ignoreId = null): void
+    {
+        if ($path === null || $path === '') {
+            return;
+        }
+
+        $exists = Asset::withTrashed()
+            ->when($ignoreId, static fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->where('file_path', $path)
+            ->exists();
+
+        if ($exists) {
+            throw new InvalidArgumentException("An asset already uses the path [{$path}].");
+        }
     }
 }
