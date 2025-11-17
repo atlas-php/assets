@@ -23,7 +23,7 @@ final class ConfigTest extends TestCase
         self::assertSame('public', config('atlas-assets.visibility'));
         self::assertFalse((bool) config('atlas-assets.delete_files_on_soft_delete'));
         self::assertSame(
-            '{model_type}/{model_id}/{uuid}.{extension}',
+            '{model_type}/{model_id}/{file_name}.{extension}',
             config('atlas-assets.path.pattern')
         );
         self::assertNull(config('atlas-assets.path.resolver'));

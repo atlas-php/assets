@@ -47,7 +47,7 @@ final class PathResolverTest extends TestCase
 
         $path = $resolver->resolve($file, null, []);
 
-        self::assertMatchesRegularExpression('/^uploads\/none\/none\/none\/[a-f0-9-]{36}\.png$/', $path);
+        self::assertMatchesRegularExpression('/^uploads\/[a-f0-9-]{36}\.png$/', $path);
     }
 
     public function test_pattern_resolver_supports_date_and_random_placeholders(): void
@@ -78,6 +78,18 @@ final class PathResolverTest extends TestCase
         $resolver = $this->app->make(PathResolver::class);
 
         self::assertSame('custom/Report.docx', $resolver->resolve($file));
+    }
+
+    public function test_pattern_resolver_uses_file_name_placeholder(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+        config()->set('atlas-assets.path.pattern', '{file_name}.{extension}');
+
+        $file = UploadedFile::fake()->create('Quarterly Report 2024.PDF', 10, 'application/pdf');
+
+        $resolver = $this->app->make(PathResolver::class);
+
+        self::assertSame('quarterly_report_2024.pdf', $resolver->resolve($file));
     }
 
     public function test_callback_resolver_must_return_non_empty_string(): void

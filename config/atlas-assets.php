@@ -18,7 +18,7 @@ return [
     ],
 
     'path' => [
-        'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
+        'pattern' => '{model_type}/{model_id}/{file_name}.{extension}',
 
         'resolver' => null,
     ],

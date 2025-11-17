@@ -107,6 +107,7 @@ Supported placeholders:
 * `{model_type}`
 * `{model_id}`
 * `{user_id}`
+* `{file_name}`
 * `{original_name}`
 * `{extension}`
 * `{date:Y/m}`
@@ -210,12 +211,14 @@ return [
     ],
 
     'path' => [
-        'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
+        'pattern' => '{model_type}/{model_id}/{file_name}.{extension}',
 
         'resolver' => null,
     ],
 ];
 ```
+
+When a placeholder resolves to an empty value (for example when uploading without a related model), the resolver automatically collapses empty segments so files fall back to the disk root.
 
 Consumers may override:
 

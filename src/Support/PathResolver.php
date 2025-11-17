@@ -19,8 +19,6 @@ use InvalidArgumentException;
  */
 class PathResolver
 {
-    private const DEFAULT_PLACEHOLDER_VALUE = 'none';
-
     public function __construct(private readonly Repository $config) {}
 
     /**
@@ -61,32 +59,27 @@ class PathResolver
             $placeholder === 'model_id' => $this->modelId($model),
             $placeholder === 'user_id' => $this->userId($attributes),
             $placeholder === 'original_name' => $this->originalName($file),
+            $placeholder === 'file_name' => $this->fileName($file),
             $placeholder === 'extension' => $this->extension($file),
             $placeholder === 'random' => Str::lower(Str::random(16)),
             $placeholder === 'uuid' => Str::uuid()->toString(),
             str_starts_with($placeholder, 'date:') => $this->datePlaceholder($placeholder),
-            default => self::DEFAULT_PLACEHOLDER_VALUE,
+            default => '',
         };
     }
 
     private function modelType(?Model $model): string
     {
-        if ($model === null) {
-            return self::DEFAULT_PLACEHOLDER_VALUE;
-        }
-
-        return Str::snake(class_basename($model));
+        return $model === null
+            ? ''
+            : Str::snake(class_basename($model));
     }
 
     private function modelId(?Model $model): string
     {
         $key = $model?->getKey();
 
-        if ($key === null) {
-            return self::DEFAULT_PLACEHOLDER_VALUE;
-        }
-
-        return (string) $key;
+        return $key === null ? '' : (string) $key;
     }
 
     /**
@@ -96,11 +89,7 @@ class PathResolver
     {
         $userId = $attributes['user_id'] ?? null;
 
-        if ($userId === null || $userId === '') {
-            return self::DEFAULT_PLACEHOLDER_VALUE;
-        }
-
-        return (string) $userId;
+        return ($userId === null || $userId === '') ? '' : (string) $userId;
     }
 
     private function originalName(UploadedFile $file): string
@@ -111,7 +100,22 @@ class PathResolver
             $name = (string) pathinfo($file->getFilename(), PATHINFO_FILENAME);
         }
 
-        return $name === '' ? self::DEFAULT_PLACEHOLDER_VALUE : Str::slug($name, '_');
+        return $name === '' ? '' : Str::slug($name, '_');
+    }
+
+    private function fileName(UploadedFile $file): string
+    {
+        $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+        if (! is_string($name) || $name === '') {
+            $name = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+        }
+
+        if (! is_string($name) || $name === '') {
+            return '';
+        }
+
+        return Str::slug($name, '_');
     }
 
     private function extension(UploadedFile $file): string
@@ -136,10 +140,17 @@ class PathResolver
     {
         $normalized = preg_replace('#/{2,}#', '/', str_replace('\\', '/', $path));
 
-        $normalized = $normalized ?? $path;
+        if ($normalized === null) {
+            $normalized = $path;
+        }
 
-        $normalized = trim($normalized, '/');
+        $segments = array_values(array_filter(
+            explode('/', $normalized),
+            static fn ($segment) => $segment !== ''
+        ));
 
-        return $normalized === '' ? self::DEFAULT_PLACEHOLDER_VALUE : $normalized;
+        $normalizedPath = trim(implode('/', $segments), '/');
+
+        return $normalizedPath === '' ? 'asset' : $normalizedPath;
     }
 }

@@ -23,6 +23,7 @@ class ConfigValidator
         'extension',
         'random',
         'uuid',
+        'file_name',
     ];
 
     /**

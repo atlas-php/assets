@@ -32,17 +32,33 @@ final class AssetServiceTest extends TestCase
 
     public function test_upload_stores_file_and_metadata(): void
     {
+        config()->set('atlas-assets.path.pattern', '{file_name}.{extension}');
+
         $file = UploadedFile::fake()->create('Document.pdf', 120, 'application/pdf');
 
         $service = $this->app->make(AssetService::class);
         $asset = $service->upload($file, ['user_id' => 10, 'label' => 'contract']);
 
         Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('document.pdf', $asset->file_path);
         self::assertSame('application/pdf', $asset->file_type);
         self::assertSame('Document.pdf', $asset->name);
         self::assertSame('Document.pdf', $asset->original_file_name);
         self::assertSame(10, $asset->user_id);
         self::assertSame('contract', $asset->label);
+    }
+
+    public function test_upload_without_model_collapses_path_placeholders(): void
+    {
+        config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{file_name}.{extension}');
+
+        $file = UploadedFile::fake()->create('Loose.txt', 5, 'text/plain');
+
+        $service = $this->app->make(AssetService::class);
+        $asset = $service->upload($file);
+
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('loose.txt', $asset->file_path);
     }
 
     public function test_upload_defaults_name_to_original_and_trims_long_values(): void
@@ -70,6 +86,7 @@ final class AssetServiceTest extends TestCase
         );
 
         Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertStringContainsString('uploadable_model/77/', $asset->file_path);
         self::assertSame($model->getMorphClass(), $asset->model_type);
         self::assertSame(77, $asset->model_id);
         self::assertSame('profile', $asset->category);
