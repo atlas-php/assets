@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Atlasphp\Assets\Tests\Feature;
+namespace Atlas\Assets\Tests\Feature;
 
-use Atlasphp\Assets\Support\ConfigValidator;
-use Atlasphp\Assets\Tests\TestCase;
+use Atlas\Assets\Support\ConfigValidator;
+use Atlas\Assets\Tests\TestCase;
 use InvalidArgumentException;
 
 /**
  * Class ConfigTest
  *
- * Ensures the atlas_assets configuration defaults align with the PRD and
+ * Ensures the atlas-assets configuration defaults align with the PRD and
  * validates misconfigurations.
  * PRD Reference: Atlas Assets Overview — Configuration.
  */
@@ -19,20 +19,21 @@ final class ConfigTest extends TestCase
 {
     public function test_exposes_default_configuration_values(): void
     {
-        self::assertSame('s3', config('atlas_assets.disk'));
-        self::assertSame('public', config('atlas_assets.visibility'));
-        self::assertFalse((bool) config('atlas_assets.delete_files_on_soft_delete'));
+        self::assertSame('s3', config('atlas-assets.disk'));
+        self::assertSame('public', config('atlas-assets.visibility'));
+        self::assertFalse((bool) config('atlas-assets.delete_files_on_soft_delete'));
         self::assertSame(
             '{model_type}/{model_id}/{uuid}.{extension}',
-            config('atlas_assets.path.pattern')
+            config('atlas-assets.path.pattern')
         );
-        self::assertNull(config('atlas_assets.path.resolver'));
+        self::assertNull(config('atlas-assets.path.resolver'));
+        self::assertSame('assets', config('atlas-assets.tables.assets'));
     }
 
     public function test_validates_configuration_when_defaults_are_used(): void
     {
         $validator = $this->app->make(ConfigValidator::class);
-        $validator->validate(config('atlas_assets'));
+        $validator->validate(config('atlas-assets'));
 
         $this->addToAssertionCount(1);
     }
@@ -41,7 +42,7 @@ final class ConfigTest extends TestCase
     {
         $validator = $this->app->make(ConfigValidator::class);
 
-        $config = config('atlas_assets');
+        $config = config('atlas-assets');
         $config['disk'] = '';
 
         $this->expectException(InvalidArgumentException::class);
@@ -54,7 +55,7 @@ final class ConfigTest extends TestCase
     {
         $validator = $this->app->make(ConfigValidator::class);
 
-        $config = config('atlas_assets');
+        $config = config('atlas-assets');
         $config['path']['pattern'] = '';
 
         $this->expectException(InvalidArgumentException::class);

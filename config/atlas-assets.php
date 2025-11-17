@@ -9,6 +9,10 @@ return [
 
     'delete_files_on_soft_delete' => env('ASSETS_DELETE_ON_SOFT_DELETE', false),
 
+    'tables' => [
+        'assets' => env('ASSETS_TABLE', 'assets'),
+    ],
+
     'path' => [
         'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
 

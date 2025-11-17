@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Atlasphp\Assets\Providers;
+namespace Atlas\Assets\Providers;
 
-use Atlasphp\Assets\Support\ConfigValidator;
+use Atlas\Assets\Support\ConfigValidator;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -22,7 +22,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(
             $this->configPath(),
-            'atlas_assets'
+            'atlas-assets'
         );
 
         $this->app->singleton(ConfigValidator::class, static fn () => new ConfigValidator);
@@ -34,7 +34,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            $this->configPath() => config_path('atlas_assets.php'),
+            $this->configPath() => config_path('atlas-assets.php'),
         ], 'atlas-assets-config');
     }
 
@@ -43,6 +43,6 @@ class AtlasAssetsServiceProvider extends ServiceProvider
      */
     protected function configPath(): string
     {
-        return __DIR__.'/../../config/atlas_assets.php';
+        return __DIR__.'/../../config/atlas-assets.php';
     }
 }

@@ -1,5 +1,5 @@
 {
-    "name": "atlasphp/assets",
+    "name": "atlas-php/assets",
     "description": "Atlas Assets is a standalone Laravel package for centralized asset storage and retrieval.",
     "type": "library",
     "license": "MIT",
@@ -18,18 +18,18 @@
     },
     "autoload": {
         "psr-4": {
-            "Atlasphp\\Assets\\": "src/"
+            "Atlas\\Assets\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Atlasphp\\Assets\\Tests\\": "tests/"
+            "Atlas\\Assets\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Atlasphp\\Assets\\Providers\\AtlasAssetsServiceProvider"
+                "Atlas\\Assets\\Providers\\AtlasAssetsServiceProvider"
             ]
         }
     },

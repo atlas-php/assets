@@ -5,7 +5,7 @@ This roadmap translates the Atlas Assets PRD into a practical implementation pla
 ## Phase 1 — Package Foundation
 
 * Scaffold the Composer package (namespace, service provider, config publishing) following AGENTS.md.
-* Define base configuration (`config/atlas_assets.php`) with disk, visibility, deletion behavior, and path resolver placeholders.
+* Define base configuration (`config/atlas-assets.php`) with disk, visibility, deletion behavior, table name overrides, and path resolver placeholders.
 * Document installation instructions and contribution requirements.
 
 ## Phase 2 — Database Schema & Model
@@ -51,7 +51,7 @@ This roadmap translates the Atlas Assets PRD into a practical implementation pla
 
 ## Phase 9 — Quality Assurance
 
-* Cover services with Pest tests (unit + integration) using Orchestra Testbench.
+* Cover services with PHPUnit tests (unit + integration) using Orchestra Testbench.
 * Add unhappy-path tests (invalid resolver, storage failures, missing files).
 * Run Pint, Larastan, and the test suite in CI and before every release.
 

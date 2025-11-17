@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Atlasphp\Assets\Tests;
+namespace Atlas\Assets\Tests;
 
-use Atlasphp\Assets\Providers\AtlasAssetsServiceProvider;
+use Atlas\Assets\Providers\AtlasAssetsServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 /**

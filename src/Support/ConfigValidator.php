@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Atlasphp\Assets\Support;
+namespace Atlas\Assets\Support;
 
 use InvalidArgumentException;
 
 /**
  * Class ConfigValidator
  *
- * Provides guardrails for atlas_assets configuration to ensure disk, visibility,
+ * Provides guardrails for atlas-assets configuration to ensure disk, visibility,
  * and path resolver settings follow the PRD baseline defaults before usage.
  * PRD Reference: Atlas Assets Overview — Configuration.
  */

@@ -188,7 +188,7 @@ Assets can exist with no model. Path rules must tolerate null model contexts.
 
 ## Configuration
 
-### `config/atlas_assets.php`
+### `config/atlas-assets.php`
 
 Key options include:
 
@@ -196,9 +196,13 @@ Key options include:
 return [
     'disk' => env('ASSETS_DISK', 's3'),
 
-    'visibility' => 'private',
+    'visibility' => env('ASSETS_VISIBILITY', 'public'),
 
-    'delete_files_on_soft_delete' => false,
+    'delete_files_on_soft_delete' => env('ASSETS_DELETE_ON_SOFT_DELETE', false),
+
+    'tables' => [
+        'assets' => env('ASSETS_TABLE', 'assets'),
+    ],
 
     'path' => [
         'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
@@ -215,3 +219,4 @@ Consumers may override:
 * default path pattern
 * custom callback resolver
 * file deletion behavior
+* database table names for package models
