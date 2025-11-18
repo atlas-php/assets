@@ -52,6 +52,19 @@ final class ConfigTest extends TestCase
         $validator->validate($config);
     }
 
+    public function test_rejects_configuration_when_visibility_is_invalid(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['visibility'] = '';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The assets visibility must be defined.');
+
+        $validator->validate($config);
+    }
+
     public function test_rejects_configuration_when_path_inputs_are_invalid(): void
     {
         $validator = $this->app->make(ConfigValidator::class);
