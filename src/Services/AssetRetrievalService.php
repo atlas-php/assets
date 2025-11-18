@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
-use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Atlas\Assets\Support\DiskResolver;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -26,8 +25,7 @@ use RuntimeException;
 class AssetRetrievalService
 {
     public function __construct(
-        private readonly FilesystemFactory $filesystem,
-        private readonly Repository $config
+        private readonly DiskResolver $diskResolver
     ) {}
 
     public function find(int|string $id): ?Asset
@@ -199,9 +197,7 @@ class AssetRetrievalService
 
     private function disk(): Filesystem
     {
-        $disk = $this->config->get('atlas-assets.disk', 's3');
-
-        return $this->filesystem->disk($disk);
+        return $this->diskResolver->resolve();
     }
 
     private function supportsTemporaryUrls(Filesystem $disk): bool

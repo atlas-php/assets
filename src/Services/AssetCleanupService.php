@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
+use Atlas\Assets\Support\DiskResolver;
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 /**
@@ -18,7 +18,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 class AssetCleanupService
 {
     public function __construct(
-        private readonly FilesystemFactory $filesystem,
+        private readonly DiskResolver $diskResolver,
         private readonly Repository $config,
     ) {}
 
@@ -75,8 +75,6 @@ class AssetCleanupService
 
     private function disk(): Filesystem
     {
-        $disk = $this->config->get('atlas-assets.disk', 's3');
-
-        return $this->filesystem->disk($disk);
+        return $this->diskResolver->resolve();
     }
 }
