@@ -21,6 +21,11 @@ use Illuminate\Support\ServiceProvider;
 class AtlasAssetsServiceProvider extends ServiceProvider
 {
     /**
+     * Track configuration validation to ensure it only runs once.
+     */
+    private bool $configurationValidated = false;
+
+    /**
      * Register bindings and merge publishable configuration.
      */
     public function register(): void
@@ -43,6 +48,8 @@ class AtlasAssetsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->validateConfiguration();
+
         $this->publishes([
             $this->configPath() => config_path('atlas-assets.php'),
         ], 'atlas-assets-config');
@@ -56,5 +63,20 @@ class AtlasAssetsServiceProvider extends ServiceProvider
     protected function configPath(): string
     {
         return __DIR__.'/../../config/atlas-assets.php';
+    }
+
+    /**
+     * Validate the atlas-assets configuration once per lifecycle.
+     */
+    protected function validateConfiguration(): void
+    {
+        if ($this->configurationValidated) {
+            return;
+        }
+
+        $validator = $this->app->make(ConfigValidator::class);
+        $validator->validate($this->app['config']->get('atlas-assets', []));
+
+        $this->configurationValidated = true;
     }
 }
