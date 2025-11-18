@@ -8,9 +8,12 @@ use Atlas\Assets\Models\Asset;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\Cursor;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 
@@ -36,26 +39,62 @@ class AssetRetrievalService
      * @param  array{label?: string|null, category?: string|null}  $filters
      * @return Collection<int, Asset>
      */
-    public function listForModel(Model $model, array $filters = []): Collection
+    public function listForModel(Model $model, array $filters = [], ?int $limit = null): Collection
     {
-        return $this->applyFilters(
-            Asset::query()
-                ->where('model_type', $model->getMorphClass())
-                ->where('model_id', $model->getKey()),
-            $filters
-        )->get();
+        $query = $this->modelQuery($model, $filters);
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
      * @return Collection<int, Asset>
      */
-    public function listForUser(int|string $userId, array $filters = []): Collection
+    public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
     {
-        return $this->applyFilters(
-            Asset::query()->where('user_id', $userId),
-            $filters
-        )->get();
+        $query = $this->userQuery($userId, $filters);
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     */
+    public function paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
+    {
+        return $this->modelQuery($model, $filters)->paginate($perPage, ['*'], $pageName, $page);
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     */
+    public function paginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
+    {
+        return $this->userQuery($userId, $filters)->paginate($perPage, ['*'], $pageName, $page);
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     */
+    public function cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
+    {
+        return $this->modelQuery($model, $filters)->cursorPaginate($perPage, ['*'], $cursorName, $cursor);
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     */
+    public function cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
+    {
+        return $this->userQuery($userId, $filters)->cursorPaginate($perPage, ['*'], $cursorName, $cursor);
     }
 
     public function download(Asset $asset): string
@@ -104,6 +143,32 @@ class AssetRetrievalService
         }
 
         return $builder->orderByDesc('id');
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    private function modelQuery(Model $model, array $filters): Builder
+    {
+        return $this->applyFilters(
+            Asset::query()
+                ->where('model_type', $model->getMorphClass())
+                ->where('model_id', $model->getKey()),
+            $filters
+        );
+    }
+
+    /**
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    private function userQuery(int|string $userId, array $filters): Builder
+    {
+        return $this->applyFilters(
+            Asset::query()->where('user_id', $userId),
+            $filters
+        );
     }
 
     private function disk(): Filesystem

@@ -15,8 +15,12 @@ Static interface backed by the service container.
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset`  | Delegates to `AssetService::update`.                                                                                              |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`         | Delegates to `AssetService::replace`.                                                                                             |
 | `find(int&#124;string $id): ?Asset`                                                                       | Delegates to `AssetRetrievalService::find`.                                                                                       |
-| `listForModel(Model $model, array $filters = []): Collection`                                            | Delegates to `AssetRetrievalService::listForModel`.                                                                               |
-| `listForUser(int&#124;string $userId, array $filters = []): Collection`                                   | Delegates to `AssetRetrievalService::listForUser`.                                                                                |
+| `listForModel(Model $model, array $filters = [], ?int $limit = null): Collection`                                            | Delegates to `AssetRetrievalService::listForModel`.                                                                               |
+| `listForUser(int&#124;string $userId, array $filters = [], ?int $limit = null): Collection`                                   | Delegates to `AssetRetrievalService::listForUser`.                                                                                |
+| `paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator` | Delegates to `AssetRetrievalService::paginateForModel`. |
+| `paginateForUser(int&#124;string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator` | Delegates to `AssetRetrievalService::paginateForUser`. |
+| `cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Delegates to `AssetRetrievalService::cursorPaginateForModel`. |
+| `cursorPaginateForUser(int&#124;string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Delegates to `AssetRetrievalService::cursorPaginateForUser`. |
 | `download(Asset $asset): string`                                                                         | Delegates to `AssetRetrievalService::download`.                                                                                   |
 | `exists(Asset $asset): bool`                                                                             | Delegates to `AssetRetrievalService::exists`.                                                                                     |
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Delegates to `AssetRetrievalService::temporaryUrl`.                                                                               |
@@ -42,11 +46,15 @@ Provides read operations and download helpers.
 
 | Method                                                        | Description                                                                                  |
 |---------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `find(int|string $id): ?Asset`                                | Fetches an asset by primary key.                                                             |
-| `listForModel(Model $model, array $filters = []): Collection` | Returns assets for the given model, with optional `label`/`category` filters.                |
-| `listForUser(int|string $userId, array $filters = []): Collection` | Returns assets for a user ID with optional filters.                                      |
+| `find(int|string $id): ?Asset`                                | Fetches an asset by primary key.                                   |
+| `listForModel(Model $model, array $filters = [], ?int $limit = null): Collection` | Returns assets for the given model, with optional `label`/`category` filters and an optional limit.                |
+| `listForUser(int|string $userId, array $filters = [], ?int $limit = null): Collection` | Returns assets for a user ID with optional filters and an optional limit.                                    |
+| `paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator` | Provides page-based pagination for model assets.                               |
+| `paginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator` | Provides page-based pagination for user assets.                               |
+| `cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Streams model assets via cursor-based pagination.                               |
+| `cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Streams user assets via cursor-based pagination.                               |
 | `download(Asset $asset): string`                              | Reads the asset file from storage and returns its contents. Throws when the file is missing. |
-| `exists(Asset $asset): bool`                                  | Checks if the asset file exists on the configured disk.                                      |
+| `exists(Asset $asset): bool`                                  | Checks if the asset file exists on the configured disk.                                   |
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL when the disk supports it or falls back to a `data:` payload.      |
 
 ### `Atlas\Assets\Services\AssetCleanupService`
