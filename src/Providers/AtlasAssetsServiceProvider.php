@@ -12,7 +12,6 @@ use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Support\PathResolver;
 use Atlas\Assets\Support\SortOrderResolver;
 use Atlas\Core\Providers\PackageServiceProvider;
-use Atlas\Core\Publishing\TagBuilder;
 
 /**
  * Class AtlasAssetsServiceProvider
@@ -22,7 +21,7 @@ use Atlas\Core\Publishing\TagBuilder;
  */
 class AtlasAssetsServiceProvider extends PackageServiceProvider
 {
-    private ?TagBuilder $publishTags = null;
+    protected string $packageBasePath = __DIR__.'/../..';
 
     /**
      * Register bindings and merge publishable configuration.
@@ -30,7 +29,7 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            $this->configPath(),
+            $this->packageConfigPath('atlas-assets.php'),
             'atlas-assets'
         );
 
@@ -52,11 +51,11 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                $this->configPath() => config_path('atlas-assets.php'),
+                $this->packageConfigPath('atlas-assets.php') => config_path('atlas-assets.php'),
             ], $this->tags()->config());
 
             $this->publishes([
-                __DIR__.'/../../database/migrations' => database_path('migrations'),
+                $this->packageDatabasePath('migrations') => database_path('migrations'),
             ], $this->tags()->migrations());
 
             $this->notifyPendingInstallSteps(
@@ -69,16 +68,8 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
         }
     }
 
-    /**
-     * Determine the absolute path to the package config file.
-     */
-    protected function configPath(): string
+    protected function packageSlug(): string
     {
-        return __DIR__.'/../../config/atlas-assets.php';
-    }
-
-    private function tags(): TagBuilder
-    {
-        return $this->publishTags ??= new TagBuilder('atlas assets');
+        return 'atlas assets';
     }
 }

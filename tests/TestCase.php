@@ -32,7 +32,7 @@ abstract class TestCase extends PackageTestCase
      */
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadPackageMigrations(__DIR__.'/../database/migrations');
     }
 
     /**
