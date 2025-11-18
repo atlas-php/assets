@@ -67,6 +67,7 @@ class AssetRetrievalService
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return LengthAwarePaginator<Asset>
      */
     public function paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
     {
@@ -75,6 +76,7 @@ class AssetRetrievalService
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return LengthAwarePaginator<Asset>
      */
     public function paginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
     {
@@ -83,6 +85,7 @@ class AssetRetrievalService
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return CursorPaginator<Asset>
      */
     public function cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
     {
@@ -91,6 +94,7 @@ class AssetRetrievalService
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return CursorPaginator<Asset>
      */
     public function cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
     {
