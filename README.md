@@ -23,10 +23,11 @@ It also supports polymorphic relationships, allowing assets to be tied to any mo
 composer require atlas-php/assets
 ```
 
-To publish configuration:
+After installation publish the configuration and migrations:
 
 ```bash
 php artisan vendor:publish --tag=atlas-assets-config
+php artisan vendor:publish --tag=atlas-assets-migrations
 ```
 
 Full installation steps: [Install Guide](./docs/Install.md)
