@@ -200,6 +200,7 @@ class AssetRetrievalService
 
     private function streamResponse(Filesystem $disk, Asset $asset): StreamedResponse
     {
+        /** @var resource|false $stream */
         $stream = $disk->readStream($asset->file_path);
 
         if ($stream === false) {
