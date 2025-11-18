@@ -66,6 +66,12 @@ List assets for a model:
 $images = Assets::listForModel($post);
 ```
 
+Use fluent aliases for readability:
+```php
+$images = Assets::forModel($post);
+$userAssets = Assets::forUser(auth()->id());
+```
+
 Temporary URL (S3, Spaces, etc.):
 ```php
 $url = Assets::temporaryUrl($asset, 10);
