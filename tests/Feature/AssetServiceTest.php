@@ -214,6 +214,38 @@ final class AssetServiceTest extends TestCase
         self::assertSame('updated', $asset->label);
     }
 
+    public function test_update_with_file_and_model_refreshes_association_and_path(): void
+    {
+        config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{file_name}.{extension}');
+
+        $initialModel = new UploadableModel();
+        $initialModel->forceFill(['id' => 10]);
+
+        $newModel = new UploadableModel();
+        $newModel->forceFill(['id' => 25]);
+
+        $service = $this->app->make(AssetService::class);
+        $asset = $service->uploadForModel($initialModel, UploadedFile::fake()->create('old.txt', 10));
+
+        $originalPath = $asset->file_path;
+
+        $service->update(
+            $asset,
+            [],
+            UploadedFile::fake()->create('updated.txt', 5),
+            $newModel
+        );
+
+        $asset->refresh();
+
+        Storage::disk('s3')->assertMissing($originalPath);
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertStringContainsString('uploadable_model/25/', $asset->file_path);
+        self::assertSame($newModel->getMorphClass(), $asset->model_type);
+        self::assertSame(25, $asset->model_id);
+        self::assertSame('updated.txt', $asset->original_file_name);
+    }
+
     public function test_replace_alias_updates_file_and_metadata(): void
     {
         Storage::fake('s3');
@@ -238,6 +270,38 @@ final class AssetServiceTest extends TestCase
         Storage::disk('s3')->assertExists($asset->file_path);
         self::assertSame('Newest.doc', $asset->name);
         self::assertSame('Newest.doc', $asset->original_file_name);
+    }
+
+    public function test_replace_updates_model_association(): void
+    {
+        config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{file_name}.{extension}');
+
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/old.doc',
+            'name' => 'Old.doc',
+            'original_file_name' => 'Old.doc',
+        ]);
+
+        Storage::disk('s3')->put('files/old.doc', 'old');
+
+        $model = new UploadableModel();
+        $model->forceFill(['id' => 99]);
+
+        $service = $this->app->make(AssetService::class);
+        $service->replace(
+            $asset,
+            UploadedFile::fake()->create('Newest.doc', 50, 'application/msword'),
+            ['name' => 'Newest.doc'],
+            $model
+        );
+
+        $asset->refresh();
+
+        Storage::disk('s3')->assertMissing('files/old.doc');
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertStringContainsString('uploadable_model/99/', $asset->file_path);
+        self::assertSame($model->getMorphClass(), $asset->model_type);
+        self::assertSame(99, $asset->model_id);
     }
 
     public function test_update_with_file_overwrites_when_path_matches(): void

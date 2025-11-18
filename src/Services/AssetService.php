@@ -55,6 +55,11 @@ class AssetService
     {
         $updates = [];
 
+        if ($model !== null) {
+            $updates['model_type'] = $model->getMorphClass();
+            $updates['model_id'] = $model->getKey();
+        }
+
         if ($file !== null) {
             /** @var array{path: string, type: string, size: int, original_name: string} $fileData */
             $fileData = $this->storeFile(
