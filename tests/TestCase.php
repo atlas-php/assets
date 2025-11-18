@@ -28,6 +28,14 @@ abstract class TestCase extends Orchestra
     }
 
     /**
+     * Define package migrations for RefreshDatabase usage.
+     */
+    protected function defineDatabaseMigrations(): void
+    {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+
+    /**
      * @return array<int, class-string>
      */
     protected function getPackageProviders($app): array
