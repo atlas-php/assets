@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
+use Atlas\Assets\Support\DiskResolver;
 use Atlas\Assets\Support\PathResolver;
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -25,7 +25,7 @@ use RuntimeException;
 class AssetService
 {
     public function __construct(
-        private readonly FilesystemFactory $filesystem,
+        private readonly DiskResolver $diskResolver,
         private readonly PathResolver $pathResolver,
         private readonly Repository $config
     ) {}
@@ -178,9 +178,7 @@ class AssetService
 
     private function disk(): Filesystem
     {
-        $disk = $this->config->get('atlas-assets.disk', 's3');
-
-        return $this->filesystem->disk($disk);
+        return $this->diskResolver->resolve();
     }
 
     private function sanitizeString(mixed $value, int $limit = 255): ?string

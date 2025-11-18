@@ -32,6 +32,18 @@ final class AssetServiceTest extends TestCase
         config()->set('atlas-assets.disk', 's3');
     }
 
+    public function test_upload_uses_configured_disk(): void
+    {
+        Storage::fake('shared-disk');
+        config()->set('atlas-assets.disk', 'shared-disk');
+
+        $service = $this->app->make(AssetService::class);
+
+        $asset = $service->upload(UploadedFile::fake()->create('Shared.txt', 1));
+
+        Storage::disk('shared-disk')->assertExists($asset->file_path);
+    }
+
     public function test_upload_stores_file_and_metadata(): void
     {
         config()->set('atlas-assets.path.pattern', '{file_name}.{extension}');

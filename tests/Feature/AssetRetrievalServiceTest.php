@@ -162,6 +162,23 @@ final class AssetRetrievalServiceTest extends TestCase
         self::assertSame('content', $service->download($asset));
     }
 
+    public function test_download_uses_configured_disk(): void
+    {
+        Storage::fake('shared-disk');
+        config()->set('atlas-assets.disk', 'shared-disk');
+
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/configured.doc',
+            'file_type' => 'application/msword',
+        ]);
+
+        Storage::disk('shared-disk')->put('files/configured.doc', 'configured-content');
+
+        $service = $this->app->make(AssetRetrievalService::class);
+
+        self::assertSame('configured-content', $service->download($asset));
+    }
+
     public function test_download_throws_when_file_missing(): void
     {
         $asset = Asset::factory()->create([
