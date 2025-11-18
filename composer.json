@@ -6,7 +6,8 @@
     "require": {
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0",
-        "illuminate/filesystem": "^10.0|^11.0"
+        "illuminate/filesystem": "^10.0|^11.0",
+        "atlas-php/core": "dev-main"
     },
     "require-dev": {
         "laravel/pint": "^1.15",
@@ -15,6 +16,15 @@
         "orchestra/testbench": "^8.24|^9.0",
         "phpunit/phpunit": "^10.5"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Atlas\\Assets\\": "src/"

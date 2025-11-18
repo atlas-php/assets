@@ -4,8 +4,64 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8c1dddf9b848d8bfc8998ac783416e0b",
+    "content-hash": "6fa5200b28041e28d929704bba996bbd",
     "packages": [
+        {
+            "name": "atlas-php/core",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../core",
+                "reference": "5280bf0aee632549543f178d9158735bb130491b"
+            },
+            "require": {
+                "illuminate/support": "^10.0 || ^11.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.13",
+                "nunomaduro/larastan": "^2.7",
+                "orchestra/testbench": "^8.13 || ^9.0",
+                "phpunit/phpunit": "^10.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Atlas\\Core\\Providers\\CoreServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Atlas\\Core\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Atlas\\Core\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "lint": [
+                    "vendor/bin/pint"
+                ],
+                "analyse": [
+                    "PHPSTAN_DISABLE_PARALLEL=1 vendor/bin/phpstan analyse"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Core utilities for Atlas PHP Laravel packages.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
         {
             "name": "brick/math",
             "version": "0.14.0",
@@ -8774,7 +8830,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "atlas-php/core": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

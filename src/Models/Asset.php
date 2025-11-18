@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Models;
 
 use Atlas\Assets\Database\Factories\AssetFactory;
+use Atlas\Core\Models\AtlasModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +38,10 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
  */
 class Asset extends AtlasModel
 {
+    protected string $configPrefix = 'atlas-assets';
+
+    protected string $tableKey = 'assets';
+
     /** @use HasFactory<AssetFactory> */
     use HasFactory;
 
@@ -95,11 +100,6 @@ class Asset extends AtlasModel
     public function hasOwner(): bool
     {
         return $this->user_id !== null;
-    }
-
-    protected function tableNameConfigKey(): string
-    {
-        return 'atlas-assets.tables.assets';
     }
 
     protected function defaultTableName(): string

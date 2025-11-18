@@ -11,8 +11,8 @@ use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Support\PathResolver;
 use Atlas\Assets\Support\SortOrderResolver;
-use Illuminate\Support\ServiceProvider;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Atlas\Core\Providers\PackageServiceProvider;
+use Atlas\Core\Publishing\TagBuilder;
 
 /**
  * Class AtlasAssetsServiceProvider
@@ -20,8 +20,10 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  * Boots and registers the Atlas Assets package bindings and publishable assets.
  * PRD Reference: Atlas Assets Overview — Service registration and configuration.
  */
-class AtlasAssetsServiceProvider extends ServiceProvider
+class AtlasAssetsServiceProvider extends PackageServiceProvider
 {
+    private ?TagBuilder $publishTags = null;
+
     /**
      * Register bindings and merge publishable configuration.
      */
@@ -49,80 +51,22 @@ class AtlasAssetsServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../../routes/atlas-assets.php');
 
         if ($this->app->runningInConsole()) {
-
             $this->publishes([
                 $this->configPath() => config_path('atlas-assets.php'),
-            ], 'atlas-assets-config');
+            ], $this->tags()->config());
 
             $this->publishes([
                 __DIR__.'/../../database/migrations' => database_path('migrations'),
-            ], 'atlas-assets-migrations');
+            ], $this->tags()->migrations());
 
-            $this->notifyPendingInstallSteps();
+            $this->notifyPendingInstallSteps(
+                'Atlas Assets',
+                'atlas-assets.php',
+                $this->tags()->config(),
+                '*atlas_assets*',
+                $this->tags()->migrations()
+            );
         }
-    }
-
-    private function notifyPendingInstallSteps(): void
-    {
-        if ($this->app->runningUnitTests()) {
-            return;
-        }
-
-        $missingConfig = ! $this->configPublished();
-        $missingMigrations = ! $this->migrationsPublished();
-
-        if (! $missingConfig && ! $missingMigrations) {
-            return;
-        }
-
-        $output = $this->consoleOutput();
-        $output->writeln('');
-        $output->writeln('<comment>[Atlas Assets]</comment> Publish configuration and migrations, then run migrations:');
-
-        if ($missingConfig) {
-            $output->writeln('  php artisan vendor:publish --tag=atlas-assets-config');
-        }
-
-        if ($missingMigrations) {
-            $output->writeln('  php artisan vendor:publish --tag=atlas-assets-migrations');
-        }
-
-        $output->writeln('  php artisan migrate');
-        $output->writeln('');
-    }
-
-    private function consoleOutput(): ConsoleOutput
-    {
-        if ($this->app->bound(ConsoleOutput::class)) {
-            return $this->app->make(ConsoleOutput::class);
-        }
-
-        return new ConsoleOutput;
-    }
-
-    private function configPublished(): bool
-    {
-        if (! function_exists('config_path')) {
-            return false;
-        }
-
-        return file_exists(config_path('atlas-assets.php'));
-    }
-
-    private function migrationsPublished(): bool
-    {
-        if (! function_exists('database_path')) {
-            return false;
-        }
-
-        $pattern = database_path('migrations/*atlas_assets*');
-        $matches = glob($pattern);
-
-        if ($matches === false) {
-            return false;
-        }
-
-        return $matches !== [];
     }
 
     /**
@@ -131,5 +75,10 @@ class AtlasAssetsServiceProvider extends ServiceProvider
     protected function configPath(): string
     {
         return __DIR__.'/../../config/atlas-assets.php';
+    }
+
+    private function tags(): TagBuilder
+    {
+        return $this->publishTags ??= new TagBuilder('atlas assets');
     }
 }
