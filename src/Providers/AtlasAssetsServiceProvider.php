@@ -51,7 +51,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
             ], 'atlas-assets-config');
 
             $this->publishes([
-                __DIR__ . '/../../database/migrations' => database_path('migrations'),
+                __DIR__.'/../../database/migrations' => database_path('migrations'),
             ], 'atlas-assets-migrations');
 
             $this->notifyPendingInstallSteps();
