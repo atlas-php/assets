@@ -218,10 +218,10 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{file_name}.{extension}');
 
-        $initialModel = new UploadableModel();
+        $initialModel = new UploadableModel;
         $initialModel->forceFill(['id' => 10]);
 
-        $newModel = new UploadableModel();
+        $newModel = new UploadableModel;
         $newModel->forceFill(['id' => 25]);
 
         $service = $this->app->make(AssetService::class);
@@ -284,7 +284,7 @@ final class AssetServiceTest extends TestCase
 
         Storage::disk('s3')->put('files/old.doc', 'old');
 
-        $model = new UploadableModel();
+        $model = new UploadableModel;
         $model->forceFill(['id' => 99]);
 
         $service = $this->app->make(AssetService::class);
