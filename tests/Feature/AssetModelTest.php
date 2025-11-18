@@ -57,6 +57,12 @@ final class AssetModelTest extends TestCase
 
     public function test_asset_model_respects_configured_table_and_connection(): void
     {
+        config()->set('database.connections.testbench', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
+
         config()->set('atlas-assets.tables.assets', 'custom_assets');
         config()->set('atlas-assets.database.connection', 'testbench');
 

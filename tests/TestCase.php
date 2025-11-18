@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Atlas\Assets\Tests;
 
 use Atlas\Assets\Providers\AtlasAssetsServiceProvider;
+use Atlas\Core\Testing\PackageTestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Mockery;
-use Orchestra\Testbench\TestCase as Orchestra;
 
 /**
  * Class TestCase
@@ -15,7 +15,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
  * Base testbench case for Atlas Assets package tests.
  * PRD Reference: Atlas Assets Overview — Package requirements.
  */
-abstract class TestCase extends Orchestra
+abstract class TestCase extends PackageTestCase
 {
     use WithFaker;
 
@@ -43,20 +43,6 @@ abstract class TestCase extends Orchestra
         return [
             AtlasAssetsServiceProvider::class,
         ];
-    }
-
-    /**
-     * @param  \Illuminate\Foundation\Application  $app
-     */
-    protected function getEnvironmentSetUp($app): void
-    {
-        $app['config']->set('database.default', 'testbench');
-
-        $app['config']->set('database.connections.testbench', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
     }
 
     protected function tearDown(): void
