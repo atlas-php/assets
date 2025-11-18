@@ -8,12 +8,8 @@ use Atlas\Assets\Models\Asset;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Pagination\Cursor;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 
@@ -39,9 +35,9 @@ class AssetRetrievalService
      * Fluent alias for retrieving assets associated with a model.
      *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function forModel(Model $model, array $filters = [], ?int $limit = null): Collection
+    public function forModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
         return $this->listForModel($model, $filters, $limit);
     }
@@ -50,77 +46,39 @@ class AssetRetrievalService
      * Fluent alias for retrieving assets associated with a user.
      *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
+    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
         return $this->listForUser($userId, $filters, $limit);
     }
 
     /**
+     * Build a query constrained to a specific model.
+     *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function listForModel(Model $model, array $filters = [], ?int $limit = null): Collection
+    public function listForModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
-        $query = $this->modelQuery($model, $filters);
-
-        if ($limit !== null) {
-            $query->limit($limit);
-        }
-
-        return $query->get();
+        return $this->applyLimit(
+            $this->buildModelQuery($model, $filters),
+            $limit
+        );
     }
 
     /**
+     * Build a query constrained to a user identifier.
+     *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
+    public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
-        $query = $this->userQuery($userId, $filters);
-
-        if ($limit !== null) {
-            $query->limit($limit);
-        }
-
-        return $query->get();
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return LengthAwarePaginator<Asset>
-     */
-    public function paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
-    {
-        return $this->modelQuery($model, $filters)->paginate($perPage, ['*'], $pageName, $page);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return LengthAwarePaginator<Asset>
-     */
-    public function paginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
-    {
-        return $this->userQuery($userId, $filters)->paginate($perPage, ['*'], $pageName, $page);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return CursorPaginator<Asset>
-     */
-    public function cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
-    {
-        return $this->modelQuery($model, $filters)->cursorPaginate($perPage, ['*'], $cursorName, $cursor);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return CursorPaginator<Asset>
-     */
-    public function cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
-    {
-        return $this->userQuery($userId, $filters)->cursorPaginate($perPage, ['*'], $cursorName, $cursor);
+        return $this->applyLimit(
+            $this->buildUserQuery($userId, $filters),
+            $limit
+        );
     }
 
     public function download(Asset $asset): string
@@ -175,7 +133,7 @@ class AssetRetrievalService
      * @param  array{label?: string|null, category?: string|null}  $filters
      * @return Builder<Asset>
      */
-    private function modelQuery(Model $model, array $filters): Builder
+    public function buildModelQuery(Model $model, array $filters = []): Builder
     {
         return $this->applyFilters(
             Asset::query()
@@ -189,12 +147,25 @@ class AssetRetrievalService
      * @param  array{label?: string|null, category?: string|null}  $filters
      * @return Builder<Asset>
      */
-    private function userQuery(int|string $userId, array $filters): Builder
+    public function buildUserQuery(int|string $userId, array $filters = []): Builder
     {
         return $this->applyFilters(
             Asset::query()->where('user_id', $userId),
             $filters
         );
+    }
+
+    /**
+     * @param  Builder<Asset>  $builder
+     * @return Builder<Asset>
+     */
+    private function applyLimit(Builder $builder, ?int $limit): Builder
+    {
+        if ($limit !== null) {
+            $builder->limit($limit);
+        }
+
+        return $builder;
     }
 
     private function disk(): Filesystem

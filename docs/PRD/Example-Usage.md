@@ -43,30 +43,30 @@ $asset = Assets::upload($request->file('document'), [
 ## Listing Assets
 ### For a model
 ```php
-$assets = Assets::listForModel($post);
+$assets = Assets::listForModel($post)->get();
 ```
 
-Or use fluent aliases:
+Or use fluent aliases that keep the builder fluent:
 
 ```php
-$assets = Assets::forModel($post);
+$assets = Assets::forModel($post)->paginate();
 ```
 
-With filters:
+With filters and limits:
 
 ```php
 $images = Assets::listForModel($post, [
     'label' => 'featured',
-]);
+])->limit(3)->get();
 ```
 
 ### For a user
 ```php
 $userAssets = Assets::listForUser(auth()->id(), [
     'category' => 'documents',
-]);
+])->get();
 
-$userAssets = Assets::forUser(auth()->id());
+$userAssets = Assets::forUser(auth()->id())->cursorPaginate();
 ```
 
 ## Retrieving & Downloading

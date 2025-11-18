@@ -7,6 +7,7 @@ namespace Atlas\Assets\Tests\Feature;
 use Atlas\Assets\Facades\Assets;
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Tests\TestCase;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +41,9 @@ final class AssetsFacadeTest extends TestCase
         self::assertTrue(Assets::exists($asset));
         self::assertNotNull(Assets::find($asset->id));
 
-        $collection = Assets::listForUser(7);
+        $query = Assets::listForUser(7);
+        self::assertInstanceOf(Builder::class, $query);
+        $collection = $query->get();
         self::assertCount(1, $collection);
 
         Assets::replace(

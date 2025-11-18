@@ -9,6 +9,7 @@ use Atlas\Assets\Services\AssetRetrievalService;
 use Atlas\Assets\Tests\TestCase;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -60,7 +61,9 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $service = $this->app->make(AssetRetrievalService::class);
 
-        $results = $service->listForModel($model, ['label' => 'hero']);
+        $builder = $service->listForModel($model, ['label' => 'hero']);
+        self::assertInstanceOf(Builder::class, $builder);
+        $results = $builder->get();
 
         self::assertCount(1, $results);
         self::assertTrue($results->first()->is($matching));
@@ -83,7 +86,8 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $service = $this->app->make(AssetRetrievalService::class);
 
-        $results = $service->listForModel($model, [], 2);
+        $builder = $service->listForModel($model, [], 2);
+        $results = $builder->get();
 
         self::assertCount(2, $results);
         self::assertFalse($results->contains($oldest));
@@ -105,13 +109,15 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $service = $this->app->make(AssetRetrievalService::class);
 
-        $results = $service->listForUser($userId, ['category' => 'docs']);
+        $builder = $service->listForUser($userId, ['category' => 'docs']);
+        self::assertInstanceOf(Builder::class, $builder);
+        $results = $builder->get();
 
         self::assertCount(1, $results);
         self::assertTrue($results->first()->is($matching));
     }
 
-    public function test_paginate_for_model_returns_paginator(): void
+    public function test_list_for_model_builder_paginates(): void
     {
         $model = new RetrievalModel;
         $model->forceFill(['id' => 91]);
@@ -123,7 +129,7 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $service = $this->app->make(AssetRetrievalService::class);
 
-        $paginator = $service->paginateForModel($model, [], 2, 'page', 1);
+        $paginator = $service->listForModel($model)->paginate(2, ['*'], 'page', 1);
 
         self::assertInstanceOf(LengthAwarePaginator::class, $paginator);
         self::assertCount(2, $paginator->items());
@@ -131,7 +137,7 @@ final class AssetRetrievalServiceTest extends TestCase
         self::assertSame($assets->get(1)->id, $paginator->items()[1]->id);
     }
 
-    public function test_cursor_paginate_for_user_returns_cursor_paginator(): void
+    public function test_list_for_user_builder_cursor_paginates(): void
     {
         $userId = 315;
 
@@ -141,7 +147,7 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $service = $this->app->make(AssetRetrievalService::class);
 
-        $paginator = $service->cursorPaginateForUser($userId, [], 2);
+        $paginator = $service->listForUser($userId)->cursorPaginate(2);
 
         self::assertInstanceOf(CursorPaginator::class, $paginator);
         self::assertCount(2, $paginator->items());

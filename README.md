@@ -62,15 +62,15 @@ Find an asset:
 $asset = Assets::find($id);
 ```
 
-List assets for a model:
+List assets for a model (returns an Eloquent builder so you control execution):
 ```php
-$images = Assets::listForModel($post);
+$images = Assets::listForModel($post)->get();
 ```
 
-Use fluent aliases for readability:
+Use fluent aliases for readability or build paginators directly:
 ```php
-$images = Assets::forModel($post);
-$userAssets = Assets::forUser(auth()->id());
+$images = Assets::forModel($post, ['label' => 'hero'])->limit(5)->get();
+$userAssets = Assets::forUser(auth()->id())->paginate();
 ```
 
 Temporary URL (S3, Spaces, etc.):

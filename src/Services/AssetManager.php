@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
-use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Pagination\Cursor;
 
 /**
  * Class AssetManager
@@ -72,9 +69,9 @@ class AssetManager
      * Fluent alias for retrieving assets associated with a model.
      *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function forModel(Model $model, array $filters = [], ?int $limit = null): Collection
+    public function forModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
         return $this->retrievalService->forModel($model, $filters, $limit);
     }
@@ -83,65 +80,29 @@ class AssetManager
      * Fluent alias for retrieving assets associated with a user.
      *
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
+    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
         return $this->retrievalService->forUser($userId, $filters, $limit);
     }
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function listForModel(Model $model, array $filters = [], ?int $limit = null): Collection
+    public function listForModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
         return $this->retrievalService->listForModel($model, $filters, $limit);
     }
 
     /**
      * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return Collection<int, Asset>
+     * @return Builder<Asset>
      */
-    public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
+    public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
         return $this->retrievalService->listForUser($userId, $filters, $limit);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return LengthAwarePaginator<Asset>
-     */
-    public function paginateForModel(Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
-    {
-        return $this->retrievalService->paginateForModel($model, $filters, $perPage, $pageName, $page);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return LengthAwarePaginator<Asset>
-     */
-    public function paginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null): LengthAwarePaginator
-    {
-        return $this->retrievalService->paginateForUser($userId, $filters, $perPage, $pageName, $page);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return CursorPaginator<Asset>
-     */
-    public function cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
-    {
-        return $this->retrievalService->cursorPaginateForModel($model, $filters, $perPage, $cursorName, $cursor);
-    }
-
-    /**
-     * @param  array{label?: string|null, category?: string|null}  $filters
-     * @return CursorPaginator<Asset>
-     */
-    public function cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator
-    {
-        return $this->retrievalService->cursorPaginateForUser($userId, $filters, $perPage, $cursorName, $cursor);
     }
 
     public function download(Asset $asset): string
