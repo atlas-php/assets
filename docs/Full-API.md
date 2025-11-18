@@ -81,7 +81,7 @@ While generally resolved internally, this service can be injected to manually co
 
 Uploads honor configuration stored under `atlas-assets.uploads`:
 
-- `allowed_extensions`: optional whitelist of extensions (case-insensitive, without dots) that files must match. When populated, uploads outside the list are rejected with `DisallowedExtensionException`.
+- `allowed_extensions`: optional whitelist of extensions (case-insensitive, without dots) that files must match. When populated, uploads outside the list are rejected with `Atlas\Assets\Exceptions\DisallowedExtensionException`.
 - `blocked_extensions`: optional blocklist of extensions that are always rejected.
 - Passing `allowed_extensions` to the upload helpers overrides the configured whitelist for that single call; blocklists still apply.
 
@@ -89,7 +89,7 @@ Uploads honor configuration stored under `atlas-assets.uploads`:
 
 - `uploads.max_file_size` controls the default limit in bytes (default: 10 MB).
 - Passing `max_upload_size` to upload helpers overrides the limit for a single call. Provide an integer for the new limit or `null` to disable checks.
-- `UploadSizeLimitException` is thrown whenever a file exceeds the effective limit.
+- `Atlas\Assets\Exceptions\UploadSizeLimitException` is thrown whenever a file exceeds the effective limit.
 
 ## Tests & QA
 
