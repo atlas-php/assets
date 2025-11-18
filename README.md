@@ -6,6 +6,7 @@
 - [Overview](#overview)
 - [Installation](#installation)
 - [Uploading Files](#uploading-files)
+- [Restricting File Extensions](#restricting-file-extensions)
 - [Retrieving Files](#retrieving-files)
 - [Managing Assets](#managing-assets)
 - [Custom Pathing](#custom-pathing)
@@ -54,6 +55,29 @@ $asset = Assets::upload($request->file('file'), [
     'category'=> 'images',
 ]);
 ```
+
+## Restricting File Extensions
+
+Atlas Assets can enforce whitelist and blocklist rules via `config/atlas-assets.php`:
+
+```php
+'uploads' => [
+    'allowed_extensions' => ['pdf', 'png', 'jpg'], // optional whitelist
+    'blocked_extensions' => ['exe', 'bat'],        // optional blocklist
+],
+```
+
+If the whitelist is populated, uploads must match one of the allowed extensions. Blocklisted extensions are always rejected, even when a whitelist is configured.
+
+You may scope a one-off whitelist by passing `allowed_extensions` to the upload helpers:
+
+```php
+$asset = Assets::upload($request->file('file'), [
+    'allowed_extensions' => ['csv'], // overrides config whitelist for this call only
+]);
+```
+
+Blocklisted extensions still apply when overriding the whitelist.
 
 ## Retrieving Files
 

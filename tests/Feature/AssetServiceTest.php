@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Tests\Feature;
 
+use Atlas\Assets\Exceptions\DisallowedExtensionException;
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Tests\TestCase;
@@ -362,6 +363,59 @@ final class AssetServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $service->update($asset, [], UploadedFile::fake()->create('new.doc', 1));
+    }
+
+    public function test_upload_rejects_extension_not_in_whitelist(): void
+    {
+        config()->set('atlas-assets.uploads.allowed_extensions', ['pdf', 'docx']);
+
+        $service = $this->app->make(AssetService::class);
+
+        $this->expectException(DisallowedExtensionException::class);
+        $this->expectExceptionMessage('not allowed by the configured whitelist');
+
+        $service->upload(UploadedFile::fake()->image('photo.png'));
+    }
+
+    public function test_upload_rejects_blocklisted_extension(): void
+    {
+        config()->set('atlas-assets.uploads.blocked_extensions', ['png']);
+
+        $service = $this->app->make(AssetService::class);
+
+        $this->expectException(DisallowedExtensionException::class);
+        $this->expectExceptionMessage('blocked for asset uploads');
+
+        $service->upload(UploadedFile::fake()->image('photo.png'));
+    }
+
+    public function test_upload_supports_per_upload_allowed_extensions_override(): void
+    {
+        config()->set('atlas-assets.uploads.allowed_extensions', ['pdf']);
+
+        $service = $this->app->make(AssetService::class);
+        $asset = $service->upload(
+            UploadedFile::fake()->image('photo.png'),
+            ['allowed_extensions' => ['png']]
+        );
+
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('photo.png', $asset->original_file_name);
+    }
+
+    public function test_upload_override_respects_blocklist(): void
+    {
+        config()->set('atlas-assets.uploads.blocked_extensions', ['png']);
+
+        $service = $this->app->make(AssetService::class);
+
+        $this->expectException(DisallowedExtensionException::class);
+        $this->expectExceptionMessage('blocked for asset uploads');
+
+        $service->upload(
+            UploadedFile::fake()->image('photo.png'),
+            ['allowed_extensions' => ['png']]
+        );
     }
 }
 

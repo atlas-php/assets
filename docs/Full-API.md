@@ -33,8 +33,8 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `user_id`, `label`, `category`, and optional `name`.                                   |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model.                                                                                                                          |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `user_id`, `label`, `category`, optional `name`, and `allowed_extensions` to override the configured whitelist for this call. |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including per-call `allowed_extensions`).                                                                                                                         |
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name` and deletes displaced files when the path changes. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience method that delegates to `update()` with a new file reference.                                                                                |
 
@@ -76,6 +76,14 @@ Runtime helpers for overriding path resolution.
 ### `Atlas\Assets\Support\PathResolver`
 
 While generally resolved internally, this service can be injected to manually compute storage paths using the configured pattern/callback via `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`.
+
+### Extension Filtering
+
+Uploads honor configuration stored under `atlas-assets.uploads`:
+
+- `allowed_extensions`: optional whitelist of extensions (case-insensitive, without dots) that files must match. When populated, uploads outside the list are rejected with `DisallowedExtensionException`.
+- `blocked_extensions`: optional blocklist of extensions that are always rejected.
+- Passing `allowed_extensions` to the upload helpers overrides the configured whitelist for that single call; blocklists still apply.
 
 ## Tests & QA
 

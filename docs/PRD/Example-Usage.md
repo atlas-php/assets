@@ -6,6 +6,7 @@ This document provides practical examples demonstrating how to use Atlas Assets 
 - [Basic Upload](#basic-upload)
 - [Upload for a Model](#upload-for-a-model)
 - [Upload with Attributes](#upload-with-attributes)
+- [Restricting Extensions](#restricting-extensions)
 - [Listing Assets](#listing-assets)
 - [Retrieving & Downloading](#retrieving--downloading)
 - [Temporary URLs](#temporary-urls)
@@ -37,6 +38,24 @@ $asset = Assets::upload($request->file('document'), [
     'label'   => 'invoice',
     'category'=> 'billing',
     'name'    => 'January Invoice.pdf',
+]);
+```
+
+## Restricting Extensions
+Configure whitelists/blocklists in `config/atlas-assets.php`:
+
+```php
+'uploads' => [
+    'allowed_extensions' => ['pdf', 'png'],
+    'blocked_extensions' => ['exe'],
+],
+```
+
+Blocklists always apply. For single uploads that need a one-off whitelist, pass `allowed_extensions`:
+
+```php
+$asset = Assets::upload($request->file('export'), [
+    'allowed_extensions' => ['csv'],
 ]);
 ```
 

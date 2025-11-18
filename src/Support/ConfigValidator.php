@@ -59,6 +59,9 @@ class ConfigValidator
         if ($hasPattern) {
             $this->validatePlaceholders($pattern);
         }
+
+        $uploads = $config['uploads'] ?? [];
+        $this->validateUploadsConfig($uploads);
     }
 
     private function validatePlaceholders(string $pattern): void
@@ -85,5 +88,31 @@ class ConfigValidator
         }
 
         return in_array($placeholder, self::SUPPORTED_PLACEHOLDERS, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $uploads
+     */
+    private function validateUploadsConfig(array $uploads): void
+    {
+        foreach (['allowed_extensions', 'blocked_extensions'] as $key) {
+            if (! array_key_exists($key, $uploads) || $uploads[$key] === null) {
+                continue;
+            }
+
+            if (! is_array($uploads[$key])) {
+                throw new InvalidArgumentException(sprintf('The uploads.%s value must be an array of extensions.', $key));
+            }
+
+            foreach ($uploads[$key] as $extension) {
+                if ($extension instanceof \Stringable) {
+                    $extension = (string) $extension;
+                }
+
+                if (! is_string($extension) || trim($extension) === '') {
+                    throw new InvalidArgumentException(sprintf('Each uploads.%s entry must be a non-empty string.', $key));
+                }
+            }
+        }
     }
 }

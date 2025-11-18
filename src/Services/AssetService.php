@@ -27,7 +27,8 @@ class AssetService
     public function __construct(
         private readonly DiskResolver $diskResolver,
         private readonly PathResolver $pathResolver,
-        private readonly Repository $config
+        private readonly Repository $config,
+        private readonly UploadGuardService $uploadGuard
     ) {}
 
     /**
@@ -142,6 +143,8 @@ class AssetService
      */
     private function storeFile(UploadedFile $file, ?Model $model, array $attributes): array
     {
+        $this->uploadGuard->validate($file, $attributes);
+
         $disk = $this->disk();
         $visibility = (string) $this->config->get('atlas-assets.visibility', 'public');
         $path = $this->pathResolver->resolve($file, $model, $attributes);

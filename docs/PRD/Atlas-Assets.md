@@ -153,6 +153,7 @@ Defined in `config/atlas-assets.php`:
 - Delete-on-soft-delete flag
 - Table name + DB connection
 - Path pattern or resolver callback
+- Upload filtering via `uploads.allowed_extensions` and `uploads.blocked_extensions`
 
 Environment overrides:
 ```
@@ -160,6 +161,13 @@ ATLAS_ASSETS_DISK=
 ATLAS_ASSETS_VISIBILITY=
 ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=
 ```
+
+### Extension Filtering Rules
+- `uploads.allowed_extensions`: optional whitelist (case-insensitive) restricting uploads to specific extensions.
+- `uploads.blocked_extensions`: optional blocklist that always rejects the listed extensions.
+- Entries accept values with or without a leading dot; they are normalized to lowercase without dots.
+- Blocklisted extensions always win—even when the file also exists in the whitelist or a per-upload override.
+- Passing `allowed_extensions` to `AssetService::upload`, `uploadForModel`, or the matching Facade method overrides the configured whitelist for that single call. The override is treated as a strict allowed list; the provided extension must exist in the array.
 
 ## Also See
 - [Full API Reference](../Full-API.md)

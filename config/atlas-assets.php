@@ -22,4 +22,10 @@ return [
 
         'resolver' => null,
     ],
+
+    'uploads' => [
+        'allowed_extensions' => [],
+
+        'blocked_extensions' => [],
+    ],
 ];

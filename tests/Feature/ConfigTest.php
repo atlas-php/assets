@@ -29,6 +29,8 @@ final class ConfigTest extends TestCase
         self::assertNull(config('atlas-assets.path.resolver'));
         self::assertSame('atlas_assets', config('atlas-assets.tables.assets'));
         self::assertNull(config('atlas-assets.database.connection'));
+        self::assertSame([], config('atlas-assets.uploads.allowed_extensions'));
+        self::assertSame([], config('atlas-assets.uploads.blocked_extensions'));
     }
 
     public function test_validates_configuration_when_defaults_are_used(): void
@@ -100,6 +102,32 @@ final class ConfigTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('path resolver must be a callable');
+
+        $validator->validate($config);
+    }
+
+    public function test_rejects_configuration_when_upload_allowed_list_is_not_array(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['uploads']['allowed_extensions'] = 'png';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('uploads.allowed_extensions');
+
+        $validator->validate($config);
+    }
+
+    public function test_rejects_configuration_when_upload_blocklist_has_invalid_values(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['uploads']['blocked_extensions'] = ['jpg', ''];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('uploads.blocked_extensions entry must be a non-empty string');
 
         $validator->validate($config);
     }
