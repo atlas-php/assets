@@ -120,9 +120,9 @@ class AssetManager
         return $this->retrievalService->temporaryUrl($asset, $minutes);
     }
 
-    public function delete(Asset $asset): void
+    public function delete(Asset $asset, bool $forceDelete = false): void
     {
-        $this->cleanupService->delete($asset);
+        $this->cleanupService->delete($asset, $forceDelete);
     }
 
     public function purge(): int

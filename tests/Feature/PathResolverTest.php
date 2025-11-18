@@ -108,10 +108,13 @@ final class PathResolverTest extends TestCase
 
     public function test_callback_resolver_can_branch_on_type_attribute(): void
     {
-        config()->set('atlas-assets.path.resolver', static function (?Model $model, UploadedFile $file, array $attributes): string {
+        $productType = 10;
+        $formType = 20;
+
+        config()->set('atlas-assets.path.resolver', static function (?Model $model, UploadedFile $file, array $attributes) use ($productType, $formType): string {
             $segment = match ($attributes['type'] ?? null) {
-                'product_image' => 'products',
-                'form_image' => 'forms',
+                $productType => 'products',
+                $formType => 'forms',
                 default => 'general',
             };
 
@@ -120,8 +123,8 @@ final class PathResolverTest extends TestCase
 
         $resolver = $this->app->make(PathResolver::class);
 
-        $productPath = $resolver->resolve(UploadedFile::fake()->image('Hero.PNG'), null, ['type' => 'product_image']);
-        $formPath = $resolver->resolve(UploadedFile::fake()->image('Signature.PNG'), null, ['type' => 'form_image']);
+        $productPath = $resolver->resolve(UploadedFile::fake()->image('Hero.PNG'), null, ['type' => $productType]);
+        $formPath = $resolver->resolve(UploadedFile::fake()->image('Signature.PNG'), null, ['type' => $formType]);
 
         self::assertSame('products/hero.png', $productPath);
         self::assertSame('forms/signature.png', $formPath);

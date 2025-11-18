@@ -22,7 +22,7 @@ Static facade backed by the service container.
 | `download(Asset $asset): string`                                                                         | Proxy to `AssetRetrievalService::download`. Reads file contents from storage.                                                    |
 | `exists(Asset $asset): bool`                                                                             | Proxy to `AssetRetrievalService::exists`. Checks if the file exists on the configured disk.                                      |
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Proxy to `AssetRetrievalService::temporaryUrl`. Returns a temporary URL or signed route URL.                                     |
-| `delete(Asset $asset): void`                                                                             | Proxy to `AssetCleanupService::delete`. Soft deletes the asset and optionally removes the file from storage.                     |
+| `delete(Asset $asset, bool $forceDelete = false): void`                                                  | Proxy to `AssetCleanupService::delete`. Soft deletes by default; pass `true` to force delete immediately and remove the file.    |
 | `purge(): int`                                                                                           | Proxy to `AssetCleanupService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
 
 ## Services
@@ -33,8 +33,8 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                                                                                                                      |
 |---------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `type`, `sort_order`, optional `name`, plus upload overrides like `allowed_extensions` and `max_upload_size` (bytes or `null`).   |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (`group_id`, `user_id`, `label`, `category`, `type`, `sort_order`, `name`, `allowed_extensions`, `max_upload_size`). Polymorphic columns are filled from the model.             |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `type` (unsigned tinyint/backed enum value), `sort_order`, optional `name`, plus upload overrides like `allowed_extensions` and `max_upload_size` (bytes or `null`).   |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (`group_id`, `user_id`, `label`, `category`, `type`), `sort_order`, `name`, `allowed_extensions`, `max_upload_size`). Polymorphic columns are filled from the model.             |
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file and/or re-associates the asset to a new model. Maintains `original_file_name`, updates `file_mime_type`, `file_ext`, `file_path`, and can recalculate or respect explicit `sort_order`. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience wrapper around `update()` that always includes a new file. When paths change, displaced files are removed according to configuration.                                                                                               |
 
@@ -61,7 +61,7 @@ Manages deletions and purging of assets.
 
 | Method                       | Description                                                                                          |
 |------------------------------|------------------------------------------------------------------------------------------------------|
-| `delete(Asset $asset): void` | Soft deletes the asset and removes the file from storage when `delete_files_on_soft_delete` is true. |
+| `delete(Asset $asset, bool $forceDelete = false): void` | Soft deletes the asset (and files when configured) or force deletes immediately when `$forceDelete` is `true`. |
 | `purge(): int`               | Permanently deletes all soft-deleted assets and their files, returning the number of purged records. |
 
 ## Support Utilities
@@ -90,7 +90,7 @@ Supported placeholders in pattern-based paths include:
 Generates sequential `sort_order` values using `config('atlas-assets.sort.scopes')` (defaults to `model_type`, `model_id`, `type`).
 
 - Honors any configured `sort.resolver` callback `(?Model $model, array $context): int`.
-- `context` includes metadata such as `group_id`, `user_id`, `category`, `type`, and other attributes.
+- `context` includes metadata such as `group_id`, `user_id`, `category`, `type` (unsigned tinyint/backed enum value), and other attributes.
 - Passing a `sort_order` attribute to write methods bypasses this resolver for manual control.
 
 Example `sort` configuration:

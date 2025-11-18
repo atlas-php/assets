@@ -53,7 +53,7 @@ final class AssetServiceTest extends TestCase
         $file = UploadedFile::fake()->create('Document.pdf', 120, 'application/pdf');
 
         $service = $this->app->make(AssetService::class);
-        $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract', 'type' => ' hero ']);
+        $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract', 'type' => TestAssetType::Hero]);
 
         Storage::disk('s3')->assertExists($asset->file_path);
         self::assertSame('document.pdf', $asset->file_path);
@@ -65,7 +65,7 @@ final class AssetServiceTest extends TestCase
         self::assertSame(44, $asset->group_id);
         self::assertSame(0, $asset->sort_order);
         self::assertSame('contract', $asset->label);
-        self::assertSame('hero', $asset->type);
+        self::assertSame(TestAssetType::Hero->value, $asset->type);
     }
 
     public function test_upload_assigns_incremental_sort_order_with_default_scope(): void
@@ -117,9 +117,9 @@ final class AssetServiceTest extends TestCase
 
         $service = $this->app->make(AssetService::class);
 
-        $hero = $service->uploadForModel($model, UploadedFile::fake()->create('hero.pdf', 5), ['type' => 'hero']);
-        $thumb = $service->uploadForModel($model, UploadedFile::fake()->create('thumb.pdf', 5), ['type' => 'thumbnail']);
-        $heroTwo = $service->uploadForModel($model, UploadedFile::fake()->create('hero-2.pdf', 5), ['type' => 'hero']);
+        $hero = $service->uploadForModel($model, UploadedFile::fake()->create('hero.pdf', 5), ['type' => TestAssetType::Hero]);
+        $thumb = $service->uploadForModel($model, UploadedFile::fake()->create('thumb.pdf', 5), ['type' => TestAssetType::Thumbnail]);
+        $heroTwo = $service->uploadForModel($model, UploadedFile::fake()->create('hero-2.pdf', 5), ['type' => TestAssetType::Hero]);
 
         self::assertSame(0, $hero->sort_order);
         self::assertSame(0, $thumb->sort_order);
@@ -256,7 +256,7 @@ final class AssetServiceTest extends TestCase
             'category' => 'images',
             'group_id' => 15,
             'user_id' => 5,
-            'type' => ' header ',
+            'type' => TestAssetType::Header,
         ]);
 
         $asset->refresh();
@@ -267,7 +267,19 @@ final class AssetServiceTest extends TestCase
         self::assertSame('images', $asset->category);
         self::assertSame(5, $asset->user_id);
         self::assertSame(15, $asset->group_id);
-        self::assertSame('header', $asset->type);
+        self::assertSame(TestAssetType::Header->value, $asset->type);
+    }
+
+    public function test_type_accepts_numeric_string_values(): void
+    {
+        $service = $this->app->make(AssetService::class);
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('numeric.pdf', 5),
+            ['type' => ' 42 ']
+        );
+
+        self::assertSame(42, $asset->type);
     }
 
     public function test_update_can_change_sort_order_manually(): void
@@ -591,6 +603,13 @@ final class AssetServiceTest extends TestCase
         Storage::disk('s3')->assertExists($asset->file_path);
         self::assertSame('huge.pdf', $asset->original_file_name);
     }
+}
+
+enum TestAssetType: int
+{
+    case Hero = 1;
+    case Thumbnail = 2;
+    case Header = 3;
 }
 
 /**

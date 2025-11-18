@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static string download(\Atlas\Assets\Models\Asset $asset)
  * @method static bool exists(\Atlas\Assets\Models\Asset $asset)
  * @method static string temporaryUrl(\Atlas\Assets\Models\Asset $asset, int $minutes = 5)
- * @method static void delete(\Atlas\Assets\Models\Asset $asset)
+ * @method static void delete(\Atlas\Assets\Models\Asset $asset, bool $forceDelete = false)
  * @method static int purge()
  */
 class Assets extends Facade

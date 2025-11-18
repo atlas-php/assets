@@ -22,8 +22,15 @@ class AssetCleanupService
         private readonly Repository $config,
     ) {}
 
-    public function delete(Asset $asset): void
+    public function delete(Asset $asset, bool $forceDelete = false): void
     {
+        if ($forceDelete) {
+            $this->deleteFile($asset->file_path);
+            $asset->forceDelete();
+
+            return;
+        }
+
         $asset->delete();
 
         if (! $this->shouldDeleteFilesOnSoftDelete()) {

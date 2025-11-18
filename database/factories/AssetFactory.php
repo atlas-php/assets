@@ -27,7 +27,7 @@ class AssetFactory extends Factory
             'group_id' => null,
             'model_type' => null,
             'model_id' => null,
-            'type' => $this->faker->optional()->randomElement(['hero', 'gallery', 'document']),
+            'type' => $this->faker->optional()->randomElement([1, 2, 3]),
             'sort_order' => 0,
             'file_mime_type' => $this->faker->mimeType(),
             'file_ext' => strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION)),

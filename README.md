@@ -45,18 +45,28 @@ $asset = Assets::uploadForModel($post, $request->file('image'));
 ```
 
 ### Upload with custom attributes
+Define your own PHP backed enum to keep `type` values readable while storing compact integers:
+```php
+enum DocumentAssetType: int
+{
+    case Hero = 1;
+    case Gallery = 2;
+    case Invoice = 3;
+}
+```
+
 ```php
 $asset = Assets::upload($request->file('file'), [
     'group_id' => $request->input('account_id'),
     'label' => 'cover',
     'category' => 'images',
-    'type' => 'hero',
+    'type' => DocumentAssetType::Hero->value,
     'sort_order' => 2,
 ]);
 ```
 
 - **group_id**: scope assets to multi‑tenant entities (accounts, teams, organizations).
-- **type**: consumer-defined enum to classify assets; participates in default sort behavior.
+- **type**: unsigned tinyint (0‑255). Back it with a PHP enum to document meaning and keep values consistent.
 - **sort_order**: override auto-sorting when manual control is needed.
 
 ## Restricting File Extensions
@@ -139,7 +149,8 @@ Assets::replace($asset, $request->file('new'));
 
 ### Delete and purge
 ```php
-Assets::delete($asset); // soft delete
+Assets::delete($asset); // soft delete + optional file removal via config
+Assets::delete($asset, true); // hard delete record + storage file immediately
 Assets::purge(); // permanently delete soft-deleted assets + files
 ```
 

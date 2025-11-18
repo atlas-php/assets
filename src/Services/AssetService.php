@@ -88,10 +88,14 @@ class AssetService
             }
         }
 
-        foreach (['name', 'label', 'category', 'type'] as $field) {
+        foreach (['name', 'label', 'category'] as $field) {
             if (array_key_exists($field, $attributes)) {
                 $updates[$field] = $this->sanitizeString($attributes[$field]);
             }
+        }
+
+        if (array_key_exists('type', $attributes)) {
+            $updates['type'] = $this->sanitizeType($attributes['type']);
         }
 
         if (array_key_exists('user_id', $attributes)) {
@@ -147,7 +151,7 @@ class AssetService
 
         $label = $this->sanitizeString($attributes['label'] ?? null);
         $category = $this->sanitizeString($attributes['category'] ?? null);
-        $type = $this->sanitizeString($attributes['type'] ?? null);
+        $type = $this->sanitizeType($attributes['type'] ?? null);
         $name = $this->sanitizeString($attributes['name'] ?? $fileData['original_name']) ?? $fileData['original_name'];
 
         $sortOrder = $this->determineInitialSortOrder($model, $attributes, $label, $category, $type);
@@ -253,10 +257,53 @@ class AssetService
         return Str::limit($string, $limit, '');
     }
 
+    private function sanitizeType(mixed $value): ?int
+    {
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \Stringable) {
+            $value = (string) $value;
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+
+            if ($value === '') {
+                return null;
+            }
+
+            if (! is_numeric($value)) {
+                throw new InvalidArgumentException('The atlas-assets type must resolve to an integer between 0 and 255 or a backed enum value.');
+            }
+
+            $value = (int) $value;
+        }
+
+        if (is_float($value)) {
+            $value = (int) $value;
+        }
+
+        if (! is_int($value)) {
+            throw new InvalidArgumentException('The atlas-assets type must resolve to an integer between 0 and 255 or a backed enum value.');
+        }
+
+        if ($value < 0 || $value > 255) {
+            throw new InvalidArgumentException('The atlas-assets type must resolve to an integer between 0 and 255 or a backed enum value.');
+        }
+
+        return $value;
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function determineInitialSortOrder(?Model $model, array $attributes, ?string $label, ?string $category, ?string $type): ?int
+    private function determineInitialSortOrder(?Model $model, array $attributes, ?string $label, ?string $category, ?int $type): ?int
     {
         $manualSort = $this->normalizeSortOrder($attributes['sort_order'] ?? null);
 
@@ -273,7 +320,7 @@ class AssetService
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    private function buildSortContext(?Model $model, array $attributes, ?string $label, ?string $category, ?string $type): array
+    private function buildSortContext(?Model $model, array $attributes, ?string $label, ?string $category, ?int $type): array
     {
         return [
             'model_type' => $model?->getMorphClass(),

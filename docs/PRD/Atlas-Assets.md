@@ -33,7 +33,7 @@ Primary Eloquent model: `Atlas\Assets\Models\Asset`
 | group_id                  | Optional grouping/tenant identifier (e.g., account, organization)           |
 | user_id                   | Optional owner/user relationship                                            |
 | model_type/model_id       | Polymorphic relation to any Laravel model                                   |
-| type                      | Consumer‑defined classification label (e.g., hero, thumbnail, invoice)      |
+| type                      | Unsigned tinyint classification (0‑255). Map values via consumer enums      |
 | sort_order                | Auto‑generated or manually assigned ordering                                |
 | file_mime_type            | MIME type inferred from upload                                              |
 | file_ext                  | File extension without dot                                                  |
@@ -59,7 +59,7 @@ class Post extends Model {
 
 ### Notes on Metadata Fields
 - **group_id** is useful for multi‑tenant architectures (e.g., scoping assets by account).
-- **type** participates in default sort behavior, allowing logical ordering per asset category.
+- **type** is stored as an unsigned tinyint (0‑255); back it with a PHP backed enum to keep values readable. It participates in default sort behavior.
 - **sort_order** can be generated automatically or assigned manually per upload/update.
 
 ## Core Responsibilities
@@ -72,7 +72,7 @@ class Post extends Model {
 Atlas Assets handles all major file lifecycle actions:
 - Upload
 - Replace file while retaining metadata
-- Soft delete asset records
+- Soft delete asset records (with optional force delete flag to immediately remove files + rows)
 - Purge soft‑deleted assets and optionally delete files
 
 Supports:
@@ -80,7 +80,7 @@ Supports:
 - Direct download and existence checking
 
 ### 3. Metadata & Classification
-- Labels, categories, and types offer flexible classification.
+- Labels, categories, and types offer flexible classification. Types are unsigned tinyints, so define a PHP enum (`enum AssetType: int { ... }`) to document each value.
 - `name` can be updated without moving the underlying file.
 - Changing `file_mime_type`, `extension`, or storage path occurs automatically when replacing a file.
 
@@ -114,11 +114,13 @@ Pathing can reflect tenancy, model type, user attributes, or any custom logic.
 
 Need per-context directories? Route on `type`, `category`, or any other attribute supplied with the upload call:
 ```php
+use App\Enums\ProductAssetType;
+
 'path' => [
     'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
         $directory = match ($attributes['type'] ?? null) {
-            'product_image' => 'products',
-            'form_image' => 'forms',
+            ProductAssetType::ProductImage->value => 'products',
+            ProductAssetType::FormImage->value => 'forms',
             default => 'general',
         };
 
@@ -183,8 +185,8 @@ Also exposes base query builders for advanced consumers.
 
 ### AssetCleanupService
 Handles cleanup:
-- `delete()` (soft delete)
-- `purge()` (permanent deletion of files + records)
+- `delete(Asset $asset, bool $forceDelete = false)` — soft delete by default, or force delete + remove files immediately when `true`
+- `purge()` — permanently delete soft-deleted records/files in batches
 
 ## Configuration
 Located in: `config/atlas-assets.php`

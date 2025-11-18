@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('model_type')->nullable();
             $table->unsignedBigInteger('model_id')->nullable();
-            $table->string('type')->nullable()->index();
+            $table->unsignedTinyInteger('type')->nullable()->index();
             $table->unsignedInteger('sort_order')->default(0);
             $table->string('file_mime_type');
             $table->string('file_ext', 20);

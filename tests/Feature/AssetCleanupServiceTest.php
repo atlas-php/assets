@@ -83,6 +83,22 @@ final class AssetCleanupServiceTest extends TestCase
         Storage::disk('shared-disk')->assertMissing('files/delete-from-shared.doc');
     }
 
+    public function test_force_delete_removes_file_and_record_immediately(): void
+    {
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/force.doc',
+        ]);
+
+        Storage::disk('s3')->put('files/force.doc', 'content');
+        config()->set('atlas-assets.delete_files_on_soft_delete', false);
+
+        $service = $this->app->make(AssetCleanupService::class);
+        $service->delete($asset, true);
+
+        Storage::disk('s3')->assertMissing('files/force.doc');
+        self::assertDatabaseMissing('atlas_assets', ['id' => $asset->id]);
+    }
+
     public function test_purge_removes_soft_deleted_assets_and_files_in_chunks(): void
     {
         $service = $this->app->make(AssetCleanupService::class);

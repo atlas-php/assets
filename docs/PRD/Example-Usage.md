@@ -38,6 +38,12 @@ $asset = Assets::uploadForModel($post, $request->file('image'));
 You may pass labels, categories, or ownership:
 
 ```php
+enum DocumentAssetType: int
+{
+    case InvoicePdf = 1;
+    case ContractPdf = 2;
+}
+
 use Atlas\Assets\Facades\Assets;
 
 $asset = Assets::upload($request->file('document'), [
@@ -46,16 +52,17 @@ $asset = Assets::upload($request->file('document'), [
     'label'      => 'invoice',
     'category'   => 'billing',
     'name'       => 'January Invoice.pdf',
-    'type'       => 'invoice_pdf',
+    'type'       => DocumentAssetType::InvoicePdf->value,
     'sort_order' => 2,
 ]);
 ```
 
 Use `group_id` for multi-tenant scenarios (accounts, organizations, etc.) where
-assets must be grouped independently from `user_id`. The `type` attribute lets
-you tag assets with consumer-defined enums (e.g., `hero`, `invoice_pdf`) and is
-included in the default sort scope. Provide `sort_order` when you need to
-explicitly position the asset; omit it to rely on the configured sort resolver.
+assets must be grouped independently from `user_id`. The `type` attribute is an
+unsigned tinyint, so back it with a PHP enum whose values fall between `0` and
+`255`. `type` participates in the default sort scope. Provide `sort_order` when
+you need to explicitly position the asset; omit it to rely on the configured
+sort resolver.
 
 ## Restricting Extensions
 Configure whitelists/blocklists in `config/atlas-assets.php`:
@@ -196,12 +203,13 @@ Assets::update($asset, ['name' => 'NewFileName.pdf']);
 This changes the metadata but **not the storage path** unless a replace occurs.
 
 ## Deleting Assets
-Soft delete the asset record (file may remain depending on configuration):
+Soft delete the asset record (file may remain depending on configuration), or force delete to immediately remove from storage and the database:
 
 ```php
 use Atlas\Assets\Facades\Assets;
 
 Assets::delete($asset);
+Assets::delete($asset, true); // force delete + remove file immediately
 ```
 
 ## Using Custom Sort Resolver
@@ -248,12 +256,15 @@ Define a resolver in `config/atlas-assets.php` to control how `sort_order` is ge
 ```
 
 ### Type-specific Routing
+Using a backed enum such as `App\Enums\ProductAssetType`:
 ```php
+use App\Enums\ProductAssetType;
+
 'path' => [
     'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
         $directory = match ($attributes['type'] ?? null) {
-            'product_image' => 'products',
-            'form_image' => 'forms',
+            ProductAssetType::ProductImage->value => 'products',
+            ProductAssetType::FormImage->value => 'forms',
             default => 'shared',
         };
 

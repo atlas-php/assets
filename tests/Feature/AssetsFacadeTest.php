@@ -66,6 +66,13 @@ final class AssetsFacadeTest extends TestCase
         Assets::delete($asset);
         self::assertSoftDeleted($asset);
 
+        $force = Assets::upload(UploadedFile::fake()->create('Force.txt', 1));
+        $path = $force->file_path;
+
+        Assets::delete($force, true);
+        Storage::disk('s3')->assertMissing($path);
+        self::assertDatabaseMissing('atlas_assets', ['id' => $force->id]);
+
         $purged = Assets::purge();
         self::assertSame(1, $purged);
         self::assertDatabaseCount('atlas_assets', 0);
