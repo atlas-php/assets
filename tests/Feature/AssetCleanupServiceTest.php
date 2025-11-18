@@ -44,20 +44,28 @@ final class AssetCleanupServiceTest extends TestCase
         self::assertSoftDeleted($asset);
     }
 
-    public function test_purge_removes_soft_deleted_assets_and_files(): void
+    public function test_purge_removes_soft_deleted_assets_and_files_in_chunks(): void
     {
         $service = $this->app->make(AssetCleanupService::class);
 
-        $asset = Asset::factory()->create([
-            'file_path' => 'files/purge.doc',
-        ]);
-        Storage::disk('s3')->put('files/purge.doc', 'content');
-        $service->delete($asset);
+        $assets = Asset::factory()->count(3)->sequence(
+            ['file_path' => 'files/purge-1.doc'],
+            ['file_path' => 'files/purge-2.doc'],
+            ['file_path' => 'files/purge-3.doc'],
+        )->create();
 
-        $purged = $service->purge();
+        foreach ($assets as $asset) {
+            Storage::disk('s3')->put($asset->file_path, 'content');
+            $service->delete($asset);
+        }
 
-        self::assertEquals(1, $purged);
+        $purged = $service->purge(chunkSize: 1);
+
+        self::assertEquals(3, $purged);
         self::assertDatabaseCount('atlas_assets', 0);
-        Storage::disk('s3')->assertMissing('files/purge.doc');
+
+        foreach ($assets as $asset) {
+            Storage::disk('s3')->assertMissing($asset->file_path);
+        }
     }
 }
