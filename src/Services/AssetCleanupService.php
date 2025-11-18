@@ -38,14 +38,14 @@ class AssetCleanupService
     public function purge(int $chunkSize = self::PURGE_CHUNK_SIZE): int
     {
         $purgedCount = 0;
-
         $chunkSize = max(1, $chunkSize);
+        $disk = $this->disk();
 
         Asset::onlyTrashed()
             ->orderBy('id')
-            ->chunkById($chunkSize, function (iterable $assets) use (&$purgedCount): void {
+            ->chunkById($chunkSize, function (iterable $assets) use (&$purgedCount, $disk): void {
                 foreach ($assets as $asset) {
-                    $this->deleteFile($asset->file_path);
+                    $this->deleteFile($asset->file_path, $disk);
 
                     $asset->forceDelete();
                     $purgedCount++;
@@ -55,16 +55,16 @@ class AssetCleanupService
         return $purgedCount;
     }
 
-    private function deleteFile(string $path): void
+    private function deleteFile(string $path, ?Filesystem $disk = null): void
     {
         if ($path === '') {
             return;
         }
 
-        $disk = $this->disk();
+        $filesystem = $disk ?? $this->disk();
 
-        if ($disk->exists($path)) {
-            $disk->delete($path);
+        if ($filesystem->exists($path)) {
+            $filesystem->delete($path);
         }
     }
 
