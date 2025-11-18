@@ -138,7 +138,7 @@ Handles creation and updates:
 
 ### AssetRetrievalService
 Read operations:
-- `find()`, `listForModel()`, `listForUser()`
+- `find()`, `forModel()`, `forUser()`, `listForModel()`, `listForUser()`
 - `download()`, `exists()`
 - `temporaryUrl()`
 

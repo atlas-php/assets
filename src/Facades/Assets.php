@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Atlas\Assets\Models\Asset update(\Atlas\Assets\Models\Asset $asset, array $attributes = [], ?\Illuminate\Http\UploadedFile $file = null, ?\Illuminate\Database\Eloquent\Model $model = null)
  * @method static \Atlas\Assets\Models\Asset replace(\Atlas\Assets\Models\Asset $asset, \Illuminate\Http\UploadedFile $file, array $attributes = [], ?\Illuminate\Database\Eloquent\Model $model = null)
  * @method static ?\Atlas\Assets\Models\Asset find(int|string $id)
+ * @method static EloquentCollection forModel(\Illuminate\Database\Eloquent\Model $model, array $filters = [], ?int $limit = null)
+ * @method static EloquentCollection forUser(int|string $userId, array $filters = [], ?int $limit = null)
  * @method static EloquentCollection listForModel(\Illuminate\Database\Eloquent\Model $model, array $filters = [], ?int $limit = null)
  * @method static EloquentCollection listForUser(int|string $userId, array $filters = [], ?int $limit = null)
  * @method static \Illuminate\Contracts\Pagination\LengthAwarePaginator paginateForModel(\Illuminate\Database\Eloquent\Model $model, array $filters = [], int $perPage = 15, string $pageName = 'page', ?int $page = null)

@@ -46,6 +46,12 @@ $asset = Assets::upload($request->file('document'), [
 $assets = Assets::listForModel($post);
 ```
 
+Or use fluent aliases:
+
+```php
+$assets = Assets::forModel($post);
+```
+
 With filters:
 
 ```php
@@ -59,6 +65,8 @@ $images = Assets::listForModel($post, [
 $userAssets = Assets::listForUser(auth()->id(), [
     'category' => 'documents',
 ]);
+
+$userAssets = Assets::forUser(auth()->id());
 ```
 
 ## Retrieving & Downloading

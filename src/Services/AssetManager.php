@@ -69,6 +69,28 @@ class AssetManager
     }
 
     /**
+     * Fluent alias for retrieving assets associated with a model.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Collection<int, Asset>
+     */
+    public function forModel(Model $model, array $filters = [], ?int $limit = null): Collection
+    {
+        return $this->retrievalService->forModel($model, $filters, $limit);
+    }
+
+    /**
+     * Fluent alias for retrieving assets associated with a user.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Collection<int, Asset>
+     */
+    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Collection
+    {
+        return $this->retrievalService->forUser($userId, $filters, $limit);
+    }
+
+    /**
      * @param  array{label?: string|null, category?: string|null}  $filters
      * @return Collection<int, Asset>
      */
