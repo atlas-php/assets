@@ -32,7 +32,7 @@ Ensure your desired filesystem disk is defined in `config/filesystems.php`.
 `atlas-assets.php` options include:
 - `disk` — defaults to `s3`
 - `visibility` — `public` (default) or `private`
-- `delete_files_on_soft_delete` — determines cleanup behavior
+- `delete_files_on_soft_delete` — when `true`, the file is removed from storage during a soft delete; when `false`, the record is soft deleted but the file remains until purged or removed manually
 
 Example `.env` overrides:
 
