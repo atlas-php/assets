@@ -31,6 +31,7 @@ final class ConfigTest extends TestCase
         self::assertNull(config('atlas-assets.database.connection'));
         self::assertSame([], config('atlas-assets.uploads.allowed_extensions'));
         self::assertSame([], config('atlas-assets.uploads.blocked_extensions'));
+        self::assertSame(10 * 1024 * 1024, config('atlas-assets.uploads.max_file_size'));
     }
 
     public function test_validates_configuration_when_defaults_are_used(): void
@@ -128,6 +129,32 @@ final class ConfigTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('uploads.blocked_extensions entry must be a non-empty string');
+
+        $validator->validate($config);
+    }
+
+    public function test_rejects_configuration_when_upload_max_size_is_invalid(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['uploads']['max_file_size'] = 'invalid';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('uploads.max_file_size');
+
+        $validator->validate($config);
+    }
+
+    public function test_rejects_configuration_when_upload_max_size_is_not_positive(): void
+    {
+        $validator = $this->app->make(ConfigValidator::class);
+
+        $config = config('atlas-assets');
+        $config['uploads']['max_file_size'] = 0;
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('uploads.max_file_size');
 
         $validator->validate($config);
     }

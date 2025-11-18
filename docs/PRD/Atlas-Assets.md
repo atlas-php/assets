@@ -154,6 +154,7 @@ Defined in `config/atlas-assets.php`:
 - Table name + DB connection
 - Path pattern or resolver callback
 - Upload filtering via `uploads.allowed_extensions` and `uploads.blocked_extensions`
+- Maximum upload size via `uploads.max_file_size` (defaults to 10 MB)
 
 Environment overrides:
 ```
@@ -168,6 +169,11 @@ ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=
 - Entries accept values with or without a leading dot; they are normalized to lowercase without dots.
 - Blocklisted extensions always win—even when the file also exists in the whitelist or a per-upload override.
 - Passing `allowed_extensions` to `AssetService::upload`, `uploadForModel`, or the matching Facade method overrides the configured whitelist for that single call. The override is treated as a strict allowed list; the provided extension must exist in the array.
+
+### File Size Limits
+- `uploads.max_file_size` defines the maximum upload size in bytes (default: `10 * 1024 * 1024`, or 10 MB). Set to `null` to disable size enforcement globally.
+- Per-upload overrides may set `max_upload_size` to a specific byte limit or `null` to bypass limits for that call.
+- Oversized uploads must raise a dedicated exception so consuming apps can gracefully notify users.
 
 ## Also See
 - [Full API Reference](../Full-API.md)

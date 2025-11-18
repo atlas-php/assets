@@ -48,6 +48,7 @@ Configure whitelists/blocklists in `config/atlas-assets.php`:
 'uploads' => [
     'allowed_extensions' => ['pdf', 'png'],
     'blocked_extensions' => ['exe'],
+    'max_file_size' => 10 * 1024 * 1024, // bytes
 ],
 ```
 
@@ -56,6 +57,18 @@ Blocklists always apply. For single uploads that need a one-off whitelist, pass 
 ```php
 $asset = Assets::upload($request->file('export'), [
     'allowed_extensions' => ['csv'],
+]);
+```
+
+Increase or disable the size limit per upload:
+
+```php
+$asset = Assets::upload($request->file('video'), [
+    'max_upload_size' => 50 * 1024 * 1024, // 50 MB limit for this call
+]);
+
+$asset = Assets::upload($request->file('archive'), [
+    'max_upload_size' => null, // unlimited for this call
 ]);
 ```
 

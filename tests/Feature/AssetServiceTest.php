@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Tests\Feature;
 
 use Atlas\Assets\Exceptions\DisallowedExtensionException;
+use Atlas\Assets\Exceptions\UploadSizeLimitException;
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Tests\TestCase;
@@ -416,6 +417,44 @@ final class AssetServiceTest extends TestCase
             UploadedFile::fake()->image('photo.png'),
             ['allowed_extensions' => ['png']]
         );
+    }
+
+    public function test_upload_rejects_files_that_exceed_configured_size_limit(): void
+    {
+        $service = $this->app->make(AssetService::class);
+
+        $this->expectException(UploadSizeLimitException::class);
+        $this->expectExceptionMessage('maximum allowed size');
+
+        $service->upload(UploadedFile::fake()->create('large.pdf', 11 * 1024, 'application/pdf'));
+    }
+
+    public function test_upload_allows_increasing_size_limit_per_call(): void
+    {
+        $service = $this->app->make(AssetService::class);
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('large.pdf', 15 * 1024, 'application/pdf'),
+            ['max_upload_size' => 20 * 1024 * 1024]
+        );
+
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('large.pdf', $asset->original_file_name);
+    }
+
+    public function test_upload_allows_disabling_size_limit_with_null_override(): void
+    {
+        config()->set('atlas-assets.uploads.max_file_size', 1024);
+
+        $service = $this->app->make(AssetService::class);
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('huge.pdf', 20 * 1024, 'application/pdf'),
+            ['max_upload_size' => null]
+        );
+
+        Storage::disk('s3')->assertExists($asset->file_path);
+        self::assertSame('huge.pdf', $asset->original_file_name);
     }
 }
 

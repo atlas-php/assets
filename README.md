@@ -79,6 +79,28 @@ $asset = Assets::upload($request->file('file'), [
 
 Blocklisted extensions still apply when overriding the whitelist.
 
+### Limiting File Size
+
+Uploads are capped at **10 MB** by default. Configure `uploads.max_file_size` (bytes) to change or disable it:
+
+```php
+'uploads' => [
+    'max_file_size' => 20 * 1024 * 1024, // 20 MB
+],
+```
+
+Per-upload overrides accept integers (bytes) or `null` (unlimited):
+
+```php
+$asset = Assets::upload($request->file('video'), [
+    'max_upload_size' => 50 * 1024 * 1024, // raise limit for this call
+]);
+
+$asset = Assets::upload($request->file('archive'), [
+    'max_upload_size' => null, // disable limit for this call only
+]);
+```
+
 ## Retrieving Files
 
 Find an asset:

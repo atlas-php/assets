@@ -33,8 +33,8 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `user_id`, `label`, `category`, optional `name`, and `allowed_extensions` to override the configured whitelist for this call. |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including per-call `allowed_extensions`).                                                                                                                         |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `user_id`, `label`, `category`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including per-call `allowed_extensions` and `max_upload_size`).                                                             |
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name` and deletes displaced files when the path changes. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience method that delegates to `update()` with a new file reference.                                                                                |
 
@@ -84,6 +84,12 @@ Uploads honor configuration stored under `atlas-assets.uploads`:
 - `allowed_extensions`: optional whitelist of extensions (case-insensitive, without dots) that files must match. When populated, uploads outside the list are rejected with `DisallowedExtensionException`.
 - `blocked_extensions`: optional blocklist of extensions that are always rejected.
 - Passing `allowed_extensions` to the upload helpers overrides the configured whitelist for that single call; blocklists still apply.
+
+### File Size Limits
+
+- `uploads.max_file_size` controls the default limit in bytes (default: 10 MB).
+- Passing `max_upload_size` to upload helpers overrides the limit for a single call. Provide an integer for the new limit or `null` to disable checks.
+- `UploadSizeLimitException` is thrown whenever a file exceeds the effective limit.
 
 ## Tests & QA
 

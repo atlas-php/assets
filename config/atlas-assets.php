@@ -27,5 +27,7 @@ return [
         'allowed_extensions' => [],
 
         'blocked_extensions' => [],
+
+        'max_file_size' => 10 * 1024 * 1024,
     ],
 ];

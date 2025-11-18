@@ -114,5 +114,11 @@ class ConfigValidator
                 }
             }
         }
+
+        if (array_key_exists('max_file_size', $uploads) && $uploads['max_file_size'] !== null) {
+            if (! is_int($uploads['max_file_size']) || $uploads['max_file_size'] <= 0) {
+                throw new InvalidArgumentException('The uploads.max_file_size value must be a positive integer or null.');
+            }
+        }
     }
 }
