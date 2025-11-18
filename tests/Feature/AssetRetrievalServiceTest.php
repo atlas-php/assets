@@ -11,7 +11,9 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 
 /**
@@ -225,7 +227,7 @@ final class AssetRetrievalServiceTest extends TestCase
         self::assertSame('https://temp.example/files/report.pdf?signature=abc', $url);
     }
 
-    public function test_temporary_url_falls_back_to_inline_download(): void
+    public function test_temporary_url_falls_back_to_signed_stream(): void
     {
         Storage::fake('inline');
         config()->set('atlas-assets.disk', 'inline');
@@ -245,7 +247,18 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $url = $service->temporaryUrl($asset);
 
-        self::assertStringStartsWith('data:application/zip;base64,', $url);
+        $request = Request::create($url);
+
+        self::assertTrue(URL::hasValidSignature($request));
+
+        $response = $this->get($url);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/zip');
+        $response->assertHeader('Content-Disposition', sprintf('inline; filename="%s"', $asset->name));
+        $response->assertHeader('Content-Length', (string) $asset->file_size);
+        $response->assertHeader('Cache-Control', 'max-age=300, private');
+        self::assertSame('archive-content', $response->streamedContent());
     }
 }
 
