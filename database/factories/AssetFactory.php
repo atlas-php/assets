@@ -24,9 +24,11 @@ class AssetFactory extends Factory
 
         return [
             'user_id' => null,
+            'group_id' => null,
             'model_type' => null,
             'model_id' => null,
-            'file_type' => $this->faker->mimeType(),
+            'file_mime_type' => $this->faker->mimeType(),
+            'file_ext' => strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION)),
             'file_path' => $this->faker->lexify('assets/'.Str::uuid().'/'.$fileName),
             'file_size' => $this->faker->numberBetween(1_024, 5_242_880),
             'name' => $fileName,

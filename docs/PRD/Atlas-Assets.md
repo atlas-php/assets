@@ -23,22 +23,29 @@ Relationships exposed by the model:
 - `model(): MorphTo` — back-reference to any owning model via the `model_type` / `model_id` columns.
 - `user(): BelongsTo` — optional relationship to the authenticated user model configured in the consuming app.
 
-| Field                     | Summary                          |
-|---------------------------|----------------------------------|
-| `id`                      | Primary key                      |
-| `user_id`                 | Optional owner                   |
-| `model_type` / `model_id` | Optional polymorphic association |
-| `file_type`               | MIME or custom value             |
-| `file_path`               | Storage path                     |
-| `file_size`               | Bytes                            |
-| `name`                    | Display name                     |
-| `original_file_name`      | Client filename                  |
-| `label` / `category`      | Optional classification          |
-| Timestamps + soft deletes | Lifecycle fields                 |
+| Field                     | Summary                                               |
+|---------------------------|-------------------------------------------------------|
+| `id`                      | Primary key                                           |
+| `group_id`                | Optional external grouping/tenancy key               |
+| `user_id`                 | Optional owner                                       |
+| `model_type` / `model_id` | Optional polymorphic association                     |
+| `file_mime_type`          | MIME type detected from the uploaded file            |
+| `file_ext`                | Lowercase file extension (no dot)                    |
+| `file_path`               | Storage path                                         |
+| `file_size`               | Bytes                                                |
+| `name`                    | Display name                                         |
+| `original_file_name`      | Client filename                                      |
+| `label` / `category`      | Optional classification                              |
+| Timestamps + soft deletes | Lifecycle fields                                     |
 
 Assets can be free‑standing or attached to any model. When attached, the owning
 model should declare a morph relationship named `model` to match the asset’s
 internal `morphTo` call.
+
+`group_id` acts as a lightweight foreign key for multi-tenant or account-based
+relationships. Consuming apps may set it to any identifier (e.g., account or
+organization ID) and use it when scoping assets or generating custom storage
+paths. It is entirely optional and independent from `user_id`.
 
 ### Example Polymorphic Setup
 

@@ -45,10 +45,15 @@ $asset = Assets::uploadForModel($post, $request->file('image'));
 Upload with attributes:
 ```php
 $asset = Assets::upload($request->file('file'), [
+    'group_id' => $request->input('account_id'),
     'label' => 'cover',
     'category' => 'images',
 ]);
 ```
+
+`group_id` is an optional unsigned big integer column you can use to scope
+assets to accounts, teams, or any additional relationship independent of
+`user_id`.
 
 ## Restricting File Extensions
 

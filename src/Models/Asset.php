@@ -20,10 +20,12 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
  * PRD Reference: Atlas Assets Overview — Database Schema.
  *
  * @property int $id
+ * @property int|null $group_id
  * @property int|null $user_id
  * @property string|null $model_type
  * @property int|null $model_id
- * @property string $file_type
+ * @property string $file_mime_type
+ * @property string $file_ext
  * @property string $file_path
  * @property int $file_size
  * @property string $name

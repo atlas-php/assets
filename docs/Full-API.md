@@ -33,9 +33,9 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `user_id`, `label`, `category`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including per-call `allowed_extensions` and `max_upload_size`).                                                             |
-| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name` and deletes displaced files when the path changes. |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including `group_id`, per-call `allowed_extensions`, and `max_upload_size`).                                                             |
+| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name`, supports changing `group_id`/`user_id`, and deletes displaced files when the path changes. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience method that delegates to `update()` with a new file reference.                                                                                |
 
 ### `Atlas\Assets\Services\AssetRetrievalService`
@@ -75,7 +75,7 @@ Runtime helpers for overriding path resolution.
 
 ### `Atlas\Assets\Support\PathResolver`
 
-While generally resolved internally, this service can be injected to manually compute storage paths using the configured pattern/callback via `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`.
+While generally resolved internally, this service can be injected to manually compute storage paths using the configured pattern/callback via `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`. Attribute placeholders include `group_id`, `user_id`, `model_*`, `file_name`, `original_name`, `extension`, `random`, `uuid`, and `date:*`.
 
 ### Extension Filtering
 

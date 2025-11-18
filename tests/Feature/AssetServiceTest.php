@@ -53,14 +53,16 @@ final class AssetServiceTest extends TestCase
         $file = UploadedFile::fake()->create('Document.pdf', 120, 'application/pdf');
 
         $service = $this->app->make(AssetService::class);
-        $asset = $service->upload($file, ['user_id' => 10, 'label' => 'contract']);
+        $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract']);
 
         Storage::disk('s3')->assertExists($asset->file_path);
         self::assertSame('document.pdf', $asset->file_path);
-        self::assertSame('application/pdf', $asset->file_type);
+        self::assertSame('application/pdf', $asset->file_mime_type);
+        self::assertSame('pdf', $asset->file_ext);
         self::assertSame('Document.pdf', $asset->name);
         self::assertSame('Document.pdf', $asset->original_file_name);
         self::assertSame(10, $asset->user_id);
+        self::assertSame(44, $asset->group_id);
         self::assertSame('contract', $asset->label);
     }
 
@@ -142,6 +144,8 @@ final class AssetServiceTest extends TestCase
     public function test_update_allows_metadata_changes_without_file(): void
     {
         $asset = Asset::factory()->create([
+            'group_id' => 9,
+            'user_id' => 4,
             'name' => 'Old',
             'original_file_name' => 'old.pdf',
             'label' => null,
@@ -153,6 +157,8 @@ final class AssetServiceTest extends TestCase
             'name' => 'New Name',
             'label' => 'hero',
             'category' => 'images',
+            'group_id' => 15,
+            'user_id' => 5,
         ]);
 
         $asset->refresh();
@@ -161,6 +167,22 @@ final class AssetServiceTest extends TestCase
         self::assertSame('old.pdf', $asset->original_file_name);
         self::assertSame('hero', $asset->label);
         self::assertSame('images', $asset->category);
+        self::assertSame(5, $asset->user_id);
+        self::assertSame(15, $asset->group_id);
+    }
+
+    public function test_update_accepts_group_id_changes_independently(): void
+    {
+        $asset = Asset::factory()->create([
+            'group_id' => null,
+        ]);
+
+        $service = $this->app->make(AssetService::class);
+        $service->update($asset, ['group_id' => 99]);
+
+        $asset->refresh();
+
+        self::assertSame(99, $asset->group_id);
     }
 
     public function test_update_trims_overflowing_metadata_inputs(): void
@@ -194,7 +216,8 @@ final class AssetServiceTest extends TestCase
             'file_path' => 'files/old.doc',
             'name' => 'Old.doc',
             'original_file_name' => 'Old.doc',
-            'file_type' => 'application/msword',
+            'file_mime_type' => 'application/msword',
+            'file_ext' => 'doc',
             'file_size' => 100,
         ]);
 
@@ -211,7 +234,8 @@ final class AssetServiceTest extends TestCase
 
         Storage::disk('s3')->assertMissing('files/old.doc');
         Storage::disk('s3')->assertExists($asset->file_path);
-        self::assertSame('application/pdf', $asset->file_type);
+        self::assertSame('application/pdf', $asset->file_mime_type);
+        self::assertSame('pdf', $asset->file_ext);
         self::assertSame('New.pdf', $asset->original_file_name);
         self::assertSame('updated', $asset->label);
     }

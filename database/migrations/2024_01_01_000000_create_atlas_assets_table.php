@@ -15,10 +15,12 @@ return new class extends Migration
 
         $this->schema()->create($tableName, function (Blueprint $table): void {
             $table->id();
+            $table->unsignedBigInteger('group_id')->nullable()->index();
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('model_type')->nullable();
             $table->unsignedBigInteger('model_id')->nullable();
-            $table->string('file_type');
+            $table->string('file_mime_type');
+            $table->string('file_ext', 20);
             $table->string('file_path');
             $table->unsignedBigInteger('file_size');
             $table->string('name');

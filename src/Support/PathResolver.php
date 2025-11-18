@@ -57,6 +57,7 @@ class PathResolver
         return match (true) {
             $placeholder === 'model_type' => $this->modelType($model),
             $placeholder === 'model_id' => $this->modelId($model),
+            $placeholder === 'group_id' => $this->groupId($attributes),
             $placeholder === 'user_id' => $this->userId($attributes),
             $placeholder === 'original_name' => $this->originalName($file),
             $placeholder === 'file_name' => $this->fileName($file),
@@ -90,6 +91,16 @@ class PathResolver
         $userId = $attributes['user_id'] ?? null;
 
         return ($userId === null || $userId === '') ? '' : (string) $userId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function groupId(array $attributes): string
+    {
+        $groupId = $attributes['group_id'] ?? null;
+
+        return ($groupId === null || $groupId === '') ? '' : (string) $groupId;
     }
 
     private function originalName(UploadedFile $file): string

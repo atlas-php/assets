@@ -160,7 +160,7 @@ final class AssetRetrievalServiceTest extends TestCase
     {
         $asset = Asset::factory()->create([
             'file_path' => 'files/doc.txt',
-            'file_type' => 'text/plain',
+            'file_mime_type' => 'text/plain',
         ]);
 
         Storage::disk('s3')->put('files/doc.txt', 'content');
@@ -177,7 +177,7 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $asset = Asset::factory()->create([
             'file_path' => 'files/configured.doc',
-            'file_type' => 'application/msword',
+            'file_mime_type' => 'application/msword',
         ]);
 
         Storage::disk('shared-disk')->put('files/configured.doc', 'configured-content');
@@ -246,7 +246,7 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $asset = Asset::factory()->create([
             'file_path' => 'files/archive.zip',
-            'file_type' => 'application/zip',
+            'file_mime_type' => 'application/zip',
         ]);
 
         $service = $this->app->make(AssetRetrievalService::class);

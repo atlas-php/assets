@@ -22,7 +22,7 @@ final class PathResolverTest extends TestCase
     public function test_pattern_resolver_substitutes_known_placeholders(): void
     {
         config()->set('atlas-assets.path.resolver', null);
-        config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{user_id}/{original_name}.{extension}');
+        config()->set('atlas-assets.path.pattern', '{model_type}/{model_id}/{group_id}/{user_id}/{original_name}.{extension}');
 
         $model = new ExampleModel;
         $model->id = 42;
@@ -31,9 +31,9 @@ final class PathResolverTest extends TestCase
 
         $resolver = $this->app->make(PathResolver::class);
 
-        $path = $resolver->resolve($file, $model, ['user_id' => 7]);
+        $path = $resolver->resolve($file, $model, ['user_id' => 7, 'group_id' => 19]);
 
-        self::assertSame('example_model/42/7/final_report.pdf', $path);
+        self::assertSame('example_model/42/19/7/final_report.pdf', $path);
     }
 
     public function test_pattern_resolver_handles_null_model_and_missing_attributes(): void

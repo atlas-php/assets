@@ -62,17 +62,21 @@ class AssetService
         }
 
         if ($file !== null) {
-            /** @var array{path: string, type: string, size: int, original_name: string} $fileData */
+            /** @var array{path: string, mime: string, extension: string, size: int, original_name: string} $fileData */
             $fileData = $this->storeFile(
                 $file,
                 $model,
-                ['user_id' => $attributes['user_id'] ?? $asset->user_id] + $attributes
+                [
+                    'user_id' => $attributes['user_id'] ?? $asset->user_id,
+                    'group_id' => $attributes['group_id'] ?? $asset->group_id,
+                ] + $attributes
             );
 
             $oldPath = $asset->file_path;
 
             $updates['file_path'] = $fileData['path'];
-            $updates['file_type'] = $fileData['type'];
+            $updates['file_mime_type'] = $fileData['mime'];
+            $updates['file_ext'] = $fileData['extension'];
             $updates['file_size'] = $fileData['size'];
             $updates['name'] = $attributes['name'] ?? $fileData['original_name'];
             $updates['original_file_name'] = $fileData['original_name'];
@@ -90,6 +94,10 @@ class AssetService
 
         if (array_key_exists('user_id', $attributes)) {
             $updates['user_id'] = $attributes['user_id'];
+        }
+
+        if (array_key_exists('group_id', $attributes)) {
+            $updates['group_id'] = $attributes['group_id'];
         }
 
         if ($updates === []) {
@@ -118,16 +126,18 @@ class AssetService
      */
     private function persist(UploadedFile $file, ?Model $model, array $attributes): Asset
     {
-        /** @var array{path: string, type: string, size: int, original_name: string} $fileData */
+        /** @var array{path: string, mime: string, extension: string, size: int, original_name: string} $fileData */
         $fileData = $this->storeFile($file, $model, $attributes);
 
         $this->ensureUniquePath($fileData['path']);
 
         return Asset::query()->create([
             'user_id' => $attributes['user_id'] ?? null,
+            'group_id' => $attributes['group_id'] ?? null,
             'model_type' => $model?->getMorphClass(),
             'model_id' => $model?->getKey(),
-            'file_type' => $fileData['type'],
+            'file_mime_type' => $fileData['mime'],
+            'file_ext' => $fileData['extension'],
             'file_path' => $fileData['path'],
             'file_size' => $fileData['size'],
             'name' => $this->sanitizeString($attributes['name'] ?? $fileData['original_name']) ?? $fileData['original_name'],
@@ -139,7 +149,7 @@ class AssetService
 
     /**
      * @param  array<string, mixed>  $attributes
-     * @return array{path: string, type: string, size: int, original_name: string}
+     * @return array{path: string, mime: string, extension: string, size: int, original_name: string}
      */
     private function storeFile(UploadedFile $file, ?Model $model, array $attributes): array
     {
@@ -168,6 +178,7 @@ class AssetService
         }
 
         $mime = $file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream';
+        $extension = $this->resolveExtension($file);
         $size = $file->getSize();
 
         if (! is_int($size)) {
@@ -178,10 +189,18 @@ class AssetService
 
         return [
             'path' => $path,
-            'type' => $mime,
+            'mime' => $mime,
+            'extension' => $extension,
             'size' => $size,
             'original_name' => $originalName,
         ];
+    }
+
+    private function resolveExtension(UploadedFile $file): string
+    {
+        $extension = $file->getClientOriginalExtension() ?: $file->extension() ?: 'bin';
+
+        return Str::lower(ltrim((string) $extension, '.'));
     }
 
     private function disk(): Filesystem

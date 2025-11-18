@@ -28,10 +28,12 @@ final class AssetModelTest extends TestCase
 
         $columns = [
             'id',
+            'group_id',
             'user_id',
             'model_type',
             'model_id',
-            'file_type',
+            'file_mime_type',
+            'file_ext',
             'file_path',
             'file_size',
             'name',
@@ -68,6 +70,7 @@ final class AssetModelTest extends TestCase
 
         self::assertNotNull($asset->id);
         self::assertNotEmpty($asset->file_path);
-        self::assertIsString($asset->file_type);
+        self::assertIsString($asset->file_mime_type);
+        self::assertIsString($asset->file_ext);
     }
 }

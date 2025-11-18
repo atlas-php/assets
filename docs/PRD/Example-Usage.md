@@ -34,11 +34,15 @@ You may pass labels, categories, or ownership:
 
 ```php
 $asset = Assets::upload($request->file('document'), [
+    'group_id' => $request->user()->account_id,
     'user_id' => auth()->id(),
     'label'   => 'invoice',
     'category'=> 'billing',
     'name'    => 'January Invoice.pdf',
 ]);
+
+Use `group_id` for multi-tenant scenarios (accounts, organizations, etc.) where
+assets must be grouped independently from `user_id`.
 ```
 
 ## Restricting Extensions

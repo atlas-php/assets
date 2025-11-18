@@ -208,7 +208,7 @@ class AssetRetrievalService
         }
 
         $headers = [
-            'Content-Type' => $asset->file_type ?: 'application/octet-stream',
+            'Content-Type' => $asset->file_mime_type ?: 'application/octet-stream',
             'Content-Length' => (string) $asset->file_size,
             'Content-Disposition' => sprintf('inline; filename="%s"', $asset->name),
             'Cache-Control' => 'max-age=300, private',
