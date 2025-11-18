@@ -10,6 +10,7 @@ use Atlas\Assets\Services\AssetRetrievalService;
 use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Support\PathResolver;
+use Atlas\Assets\Support\SortOrderResolver;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
@@ -33,6 +34,7 @@ class AtlasAssetsServiceProvider extends ServiceProvider
 
         $this->app->bind(ConfigValidator::class, static fn () => new ConfigValidator);
         $this->app->bind(PathResolver::class);
+        $this->app->bind(SortOrderResolver::class);
         $this->app->bind(AssetService::class);
         $this->app->bind(AssetRetrievalService::class);
         $this->app->bind(AssetCleanupService::class);

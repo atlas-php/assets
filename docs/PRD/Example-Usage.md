@@ -39,10 +39,13 @@ $asset = Assets::upload($request->file('document'), [
     'label'   => 'invoice',
     'category'=> 'billing',
     'name'    => 'January Invoice.pdf',
+    'sort_order' => 2,
 ]);
 
 Use `group_id` for multi-tenant scenarios (accounts, organizations, etc.) where
-assets must be grouped independently from `user_id`.
+assets must be grouped independently from `user_id`. Provide `sort_order` when
+you need to explicitly position the asset; omit it to rely on the configured
+sort resolver.
 ```
 
 ## Restricting Extensions
@@ -139,6 +142,14 @@ Assets::update($asset, [
     'category' => 'purchases',
 ]);
 ```
+
+## Reordering Assets
+```php
+Assets::update($asset, ['sort_order' => 5]);
+```
+
+Configure the automatic behavior via `atlas-assets.sort.scopes` or register a
+custom resolver to increment based on fields like `group_id` or `category`.
 
 ## Renaming an Asset
 ```php

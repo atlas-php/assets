@@ -24,6 +24,7 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
  * @property int|null $user_id
  * @property string|null $model_type
  * @property int|null $model_id
+ * @property int $sort_order
  * @property string $file_mime_type
  * @property string $file_ext
  * @property string $file_path
@@ -44,6 +45,7 @@ class Asset extends AtlasModel
      * @var array<string, string>
      */
     protected $casts = [
+        'sort_order' => 'int',
         'file_size' => 'int',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

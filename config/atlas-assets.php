@@ -23,6 +23,12 @@ return [
         'resolver' => null,
     ],
 
+    'sort' => [
+        'scopes' => ['model_type', 'model_id', 'category'],
+
+        'resolver' => null,
+    ],
+
     'uploads' => [
         'allowed_extensions' => [],
 

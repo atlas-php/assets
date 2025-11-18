@@ -7,6 +7,7 @@ namespace Atlas\Assets\Services;
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Support\DiskResolver;
 use Atlas\Assets\Support\PathResolver;
+use Atlas\Assets\Support\SortOrderResolver;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,8 @@ class AssetService
         private readonly DiskResolver $diskResolver,
         private readonly PathResolver $pathResolver,
         private readonly Repository $config,
-        private readonly UploadGuardService $uploadGuard
+        private readonly UploadGuardService $uploadGuard,
+        private readonly SortOrderResolver $sortOrderResolver
     ) {}
 
     /**
@@ -100,6 +102,12 @@ class AssetService
             $updates['group_id'] = $attributes['group_id'];
         }
 
+        $sortOrder = $this->normalizeSortOrder($attributes['sort_order'] ?? null);
+
+        if ($sortOrder !== null) {
+            $updates['sort_order'] = $sortOrder;
+        }
+
         if ($updates === []) {
             return $asset;
         }
@@ -131,19 +139,26 @@ class AssetService
 
         $this->ensureUniquePath($fileData['path']);
 
+        $label = $this->sanitizeString($attributes['label'] ?? null);
+        $category = $this->sanitizeString($attributes['category'] ?? null);
+        $name = $this->sanitizeString($attributes['name'] ?? $fileData['original_name']) ?? $fileData['original_name'];
+
+        $sortOrder = $this->determineInitialSortOrder($model, $attributes, $label, $category);
+
         return Asset::query()->create([
             'user_id' => $attributes['user_id'] ?? null,
             'group_id' => $attributes['group_id'] ?? null,
             'model_type' => $model?->getMorphClass(),
             'model_id' => $model?->getKey(),
+            'sort_order' => $sortOrder,
             'file_mime_type' => $fileData['mime'],
             'file_ext' => $fileData['extension'],
             'file_path' => $fileData['path'],
             'file_size' => $fileData['size'],
-            'name' => $this->sanitizeString($attributes['name'] ?? $fileData['original_name']) ?? $fileData['original_name'],
+            'name' => $name,
             'original_file_name' => $fileData['original_name'],
-            'label' => $this->sanitizeString($attributes['label'] ?? null),
-            'category' => $this->sanitizeString($attributes['category'] ?? null),
+            'label' => $label,
+            'category' => $category,
         ]);
     }
 
@@ -221,6 +236,61 @@ class AssetService
         }
 
         return Str::limit($string, $limit, '');
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function determineInitialSortOrder(?Model $model, array $attributes, ?string $label, ?string $category): int
+    {
+        $manualSort = $this->normalizeSortOrder($attributes['sort_order'] ?? null);
+
+        if ($manualSort !== null) {
+            return $manualSort;
+        }
+
+        $context = $this->buildSortContext($model, $attributes, $label, $category);
+
+        return $this->sortOrderResolver->next($model, $context);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function buildSortContext(?Model $model, array $attributes, ?string $label, ?string $category): array
+    {
+        return [
+            'model_type' => $model?->getMorphClass(),
+            'model_id' => $model?->getKey(),
+            'group_id' => $attributes['group_id'] ?? null,
+            'user_id' => $attributes['user_id'] ?? null,
+            'category' => $category,
+            'label' => $label,
+        ];
+    }
+
+    private function normalizeSortOrder(mixed $value): ?int
+    {
+        if ($value instanceof \Stringable) {
+            $value = (string) $value;
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+
+            if ($value === '') {
+                return null;
+            }
+        }
+
+        if ($value === null || ! is_numeric($value)) {
+            return null;
+        }
+
+        $order = (int) $value;
+
+        return $order < 0 ? 0 : $order;
     }
 
     private function ensureUniquePath(?string $path, ?int $ignoreId = null): void

@@ -33,9 +33,9 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including `group_id`, per-call `allowed_extensions`, and `max_upload_size`).                                                             |
-| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name`, supports changing `group_id`/`user_id`, and deletes displaced files when the path changes. |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `sort_order`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including `group_id`, `sort_order`, per-call `allowed_extensions`, and `max_upload_size`).                                                             |
+| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name`, supports changing `group_id`/`user_id`/`sort_order`, and deletes displaced files when the path changes. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience method that delegates to `update()` with a new file reference.                                                                                |
 
 ### `Atlas\Assets\Services\AssetRetrievalService`
@@ -77,6 +77,10 @@ Runtime helpers for overriding path resolution.
 
 While generally resolved internally, this service can be injected to manually compute storage paths using the configured pattern/callback via `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`. Attribute placeholders include `group_id`, `user_id`, `model_*`, `file_name`, `original_name`, `extension`, `random`, `uuid`, and `date:*`.
 
+### `Atlas\Assets\Support\SortOrderResolver`
+
+Generates sequential `sort_order` values by scoping queries with `config('atlas-assets.sort.scopes')` (defaults to `model_type`, `model_id`, `category`). Consumers may also register `sort.resolver` callbacks that receive the model context plus a metadata array for bespoke ordering logic. Passing a `sort_order` attribute to write methods bypasses this resolver for manual control.
+
 ### Extension Filtering
 
 Uploads honor configuration stored under `atlas-assets.uploads`:
@@ -90,6 +94,12 @@ Uploads honor configuration stored under `atlas-assets.uploads`:
 - `uploads.max_file_size` controls the default limit in bytes (default: 10 MB).
 - Passing `max_upload_size` to upload helpers overrides the limit for a single call. Provide an integer for the new limit or `null` to disable checks.
 - `Atlas\Assets\Exceptions\UploadSizeLimitException` is thrown whenever a file exceeds the effective limit.
+
+### Sort Ordering
+
+- `sort.scopes` controls which columns constrain sequential sort assignment (defaults to `model_type`, `model_id`, `category`).
+- `sort.resolver` lets consumers return a custom integer order given the model plus a metadata array.
+- Supplying `sort_order` to uploads or updates overrides the calculated value for manual reordering.
 
 ## Tests & QA
 

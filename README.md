@@ -48,12 +48,14 @@ $asset = Assets::upload($request->file('file'), [
     'group_id' => $request->input('account_id'),
     'label' => 'cover',
     'category' => 'images',
+    'sort_order' => 2,
 ]);
 ```
 
 `group_id` is an optional unsigned big integer column you can use to scope
 assets to accounts, teams, or any additional relationship independent of
-`user_id`.
+`user_id`. Pass `sort_order` to control ordering manually; omit it to let Atlas
+Assets calculate the next position automatically within the configured scope.
 
 ## Restricting File Extensions
 
@@ -133,6 +135,27 @@ Soft delete and purge:
 ```php
 Assets::delete($asset);
 Assets::purge();
+```
+
+## Sorting Assets
+
+Assets include a `sort_order` column that defaults to an auto-incremented value
+within the scope defined by `config('atlas-assets.sort.scopes')`
+(`model_type`, `model_id`, `category` by default). Customize the scope or
+register a resolver callback:
+
+```php
+'sort' => [
+    'scopes' => ['group_id'],
+    'resolver' => fn ($model, array $context) => ($context['group_id'] ?? 0) * 10,
+],
+```
+
+Pass `sort_order` to `upload`, `uploadForModel`, or `update` whenever you need
+manual control:
+
+```php
+Assets::update($asset, ['sort_order' => 12]);
 ```
 
 ## Custom Pathing

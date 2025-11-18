@@ -27,6 +27,7 @@ class AssetFactory extends Factory
             'group_id' => null,
             'model_type' => null,
             'model_id' => null,
+            'sort_order' => 0,
             'file_mime_type' => $this->faker->mimeType(),
             'file_ext' => strtolower((string) pathinfo($fileName, PATHINFO_EXTENSION)),
             'file_path' => $this->faker->lexify('assets/'.Str::uuid().'/'.$fileName),
