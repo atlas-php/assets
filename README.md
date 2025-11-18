@@ -1,6 +1,6 @@
 # Atlas Assets
 
-**Atlas Assets** provides a simple, unified API for uploading, organizing, and retrieving files across any Laravel storage disk. Every upload becomes a first‑class `Asset` with consistent metadata, model associations, and configurable pathing.
+**Atlas Assets** is a unified Laravel system for uploading, organizing, and retrieving files with a consistent API, predictable metadata, and configurable pathing. It removes scattered file‑handling logic and replaces it with a clean, reliable Assets service.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -10,39 +10,41 @@
 - [Limiting File Size](#limiting-file-size)
 - [Retrieving Files](#retrieving-files)
 - [Managing Assets](#managing-assets)
+- [Sorting Assets](#sorting-assets)
 - [Custom Pathing](#custom-pathing)
+- [Also See](#also-see)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
-Atlas Assets removes the friction of handling files by giving you a single, consistent interface for storing uploads, attaching them to models, retrieving URLs, and managing metadata. It supports any Laravel disk, polymorphic relationships, temporary URLs, and custom path generation.
+Atlas Assets provides a single `Asset` model and service layer for all file operations in Laravel. Every file uploaded becomes a fully‑tracked asset with consistent metadata, optional model/user associations, configurable sorting, and customizable storage paths. It works with any Laravel filesystem disk and includes first‑class support for temporary URLs, polymorphic relationships, and per‑upload validation rules.
 
 ## Installation
 ```bash
 composer require atlas-php/assets
 ```
 
-Publish config and migrations:
+Publish configuration and migrations:
 ```bash
 php artisan vendor:publish --tag=atlas-assets-config
 php artisan vendor:publish --tag=atlas-assets-migrations
 ```
 
-For full installation steps: [Install Guide](./docs/Install.md)
+Full steps: [Install Guide](./docs/Install.md)
 
 ## Uploading Files
 
-Basic upload:
+### Basic upload
 ```php
 $asset = Assets::upload($request->file('file'));
 ```
 
-Attach to a model:
+### Upload and attach to a model
 ```php
 $asset = Assets::uploadForModel($post, $request->file('image'));
 ```
 
-Upload with attributes:
+### Upload with custom attributes
 ```php
 $asset = Assets::upload($request->file('file'), [
     'group_id' => $request->input('account_id'),
@@ -53,16 +55,13 @@ $asset = Assets::upload($request->file('file'), [
 ]);
 ```
 
-`group_id` is an optional unsigned big integer column you can use to scope
-assets to accounts, teams, or any additional relationship independent of
-`user_id`. Use the `type` attribute to tag assets with consumer-defined enums
-such as `hero`, `thumbnail`, or `invoice`; it participates in the default sort
-scope. Pass `sort_order` to control ordering manually; omit it to let Atlas
-Assets calculate the next position automatically within the configured scope.
+- **group_id**: scope assets to multi‑tenant entities (accounts, teams, organizations).
+- **type**: consumer-defined enum to classify assets; participates in default sort behavior.
+- **sort_order**: override auto-sorting when manual control is needed.
 
 ## Restricting File Extensions
 
-Define whitelist and blocklist rules in `config/atlas-assets.php`:
+Global configuration (`config/atlas-assets.php`):
 ```php
 'uploads' => [
     'allowed_extensions' => ['pdf', 'png', 'jpg'],
@@ -70,30 +69,34 @@ Define whitelist and blocklist rules in `config/atlas-assets.php`:
 ],
 ```
 
-Override per upload:
+Per‑upload override:
 ```php
 Assets::upload($file, [
     'allowed_extensions' => ['csv'],
 ]);
 ```
 
+Blocklists always take precedence.
+
 ## Limiting File Size
 
-Default max upload size is **10 MB**. Configure globally:
+Default max size: **10 MB**.
+
+Global override:
 ```php
 'uploads' => [
-    'max_file_size' => 20 * 1024 * 1024, // bytes
-],
+    'max_file_size' => 20 * 1024 * 1024,
+];
 ```
 
-Override per upload:
+Per‑upload:
 ```php
 Assets::upload($file, [
     'max_upload_size' => 50 * 1024 * 1024,
 ]);
 ```
 
-Disable for a single upload:
+Disable per upload:
 ```php
 Assets::upload($file, [
     'max_upload_size' => null,
@@ -102,87 +105,92 @@ Assets::upload($file, [
 
 ## Retrieving Files
 
-Find an asset:
+### Find an asset
 ```php
 $asset = Assets::find($id);
 ```
 
-List for a model:
+### Get files for a model
 ```php
 $images = Assets::forModel($post)->get();
 ```
 
-Temporary URL:
+### Temporary URL
 ```php
 $url = Assets::temporaryUrl($asset, 10);
 ```
 
-Download contents:
+### Download file contents
 ```php
 $content = Assets::download($asset);
 ```
 
 ## Managing Assets
 
-Update metadata:
+### Update asset metadata
 ```php
 Assets::update($asset, ['label' => 'hero']);
 ```
 
-Replace file:
+### Replace file while keeping metadata
 ```php
 Assets::replace($asset, $request->file('new'));
 ```
 
-Soft delete and purge:
+### Delete and purge
 ```php
-Assets::delete($asset);
-Assets::purge();
+Assets::delete($asset); // soft delete
+Assets::purge(); // permanently delete soft-deleted assets + files
 ```
 
 ## Sorting Assets
+Atlas Assets automatically assigns `sort_order` values based on configured scopes:
 
-Assets include a `sort_order` column that defaults to an auto-incremented value
-within the scope defined by `config('atlas-assets.sort.scopes')`
-(`model_type`, `model_id`, `type` by default). Customize the scope or register a
-resolver callback:
+```php
+'sort' => [
+    'scopes' => ['model_type', 'model_id', 'type'],
+]
+```
+
+Customize scope or register a custom resolver:
 
 ```php
 'sort' => [
     'scopes' => ['group_id'],
-    'resolver' => fn ($model, array $context) => ($context['group_id'] ?? 0) * 10,
-],
+    'resolver' => function ($model, array $context) {
+        return ($context['group_id'] ?? 0) * 10;
+    },
+];
 ```
 
-Set `scopes` to `null` to disable automatic increments entirely (assets will use
-the database default of `0` unless you provide a value).
+Disable auto-sorting:
+```php
+'sort' => ['scopes' => null];
+```
 
-Pass `sort_order` to `upload`, `uploadForModel`, or `update` whenever you need
-manual control:
-
+Manual override:
 ```php
 Assets::update($asset, ['sort_order' => 12]);
 ```
 
 ## Custom Pathing
 
-Pattern-based pathing:
+### Pattern-based example
 ```php
 'pattern' => '{model_type}/{model_id}/{uuid}.{extension}'
 ```
 
-Callback-based:
+### Callback-based example
 ```php
-PathConfigurator::useCallback(fn ($model, $file, $attrs) =>
-    'uploads/' . ($attrs['user_id'] ?? 'anon') . '/' . uniqid() . '.' . $file->extension()
-);
+PathConfigurator::useCallback(function ($model, $file, $attrs) {
+    return 'uploads/' . ($attrs['user_id'] ?? 'anon') . '/' . uniqid() . '.' . $file->extension();
+});
 ```
 
-Reset to default:
+Reset to config:
 ```php
 PathConfigurator::clear();
 ```
-
 
 ## Also See
 - [PRD Overview](./docs/PRD/Atlas-Assets.md)
