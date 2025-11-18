@@ -237,21 +237,19 @@ Define a resolver in `config/atlas-assets.php` to control how `sort_order` is ge
 ],
 ```
 
-### Runtime Callback Override
+### Config-Based Callback Override
 ```php
-use Atlas\Assets\Support\PathConfigurator;
-
-PathConfigurator::useCallback(function ($model, $file, $attributes) {
-    return 'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
-        $file->getClientOriginalExtension();
-});
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
+        return 'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
+            $file->extension();
+    },
+],
 ```
 
 ### Reset to default pattern
 ```php
-use Atlas\Assets\Support\PathConfigurator;
-
-PathConfigurator::clear();
+'path' => ['resolver' => null];
 ```
 
 ## Purging Soft-Deleted Assets

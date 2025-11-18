@@ -66,19 +66,10 @@ Manages deletions and purging of assets.
 
 ## Support Utilities
 
-### `Atlas\Assets\Support\PathConfigurator`
-
-Runtime helpers for overriding path resolution.
-
-| Method                                                         | Description                                                                                                              |
-|----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `useCallback(callable $resolver): void`                        | Registers a callback `( ?Model $model, UploadedFile $file, array $attributes ) => string` to override path construction. |
-| `useService(string $class, string $method = '__invoke'): void` | Registers a service class/method as the resolver.                                                                        |
-| `clear(): void`                                                | Restores the pattern-based resolver defined in config.                                                                   |
-
 ### `Atlas\Assets\Support\PathResolver`
 
-Service for computing storage paths using the configured pattern or callback.
+Service for computing storage paths using `config('atlas-assets.path.pattern')` or the optional
+`config('atlas-assets.path.resolver')` callback.
 
 - `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`
 

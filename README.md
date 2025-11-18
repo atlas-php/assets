@@ -177,19 +177,23 @@ Assets::update($asset, ['sort_order' => 12]);
 
 ### Pattern-based example
 ```php
-'pattern' => '{model_type}/{model_id}/{uuid}.{extension}'
+'path' => [
+    'pattern' => '{model_type}/{model_id}/{uuid}.{extension}',
+],
 ```
 
-### Callback-based example
+### Configured callback example
 ```php
-PathConfigurator::useCallback(function ($model, $file, $attrs) {
-    return 'uploads/' . ($attrs['user_id'] ?? 'anon') . '/' . uniqid() . '.' . $file->extension();
-});
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attrs): string {
+        return 'uploads/' . ($attrs['user_id'] ?? 'anon') . '/' . uniqid() . '.' . $file->extension();
+    },
+],
 ```
 
-Reset to config:
+Reset to pattern behavior:
 ```php
-PathConfigurator::clear();
+'path' => ['resolver' => null];
 ```
 
 ## Also See

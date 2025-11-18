@@ -100,11 +100,14 @@ Uses placeholders such as:
 ```
 
 #### Callback‑based
+Defined directly in `config/atlas-assets.php`:
 ```php
-PathConfigurator::useCallback(function ($model, $file, $attributes) {
-    return 'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
-        $file->getClientOriginalExtension();
-});
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
+        return 'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
+            $file->extension();
+    },
+],
 ```
 
 Pathing can reflect tenancy, model type, user attributes, or any custom logic.
@@ -127,14 +130,16 @@ Placeholders include:
 ### Callback Pathing
 For full dynamic control, such as multi‑tenant storage buckets:
 ```php
-PathConfigurator::useCallback(function ($model, $file, $attrs) {
-    return 'accounts/' . ($attrs['group_id'] ?? 'global') . '/' . Str::uuid() . '.' . $file->extension();
-});
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attrs): string {
+        return 'accounts/' . ($attrs['group_id'] ?? 'global') . '/' . \Illuminate\Support\Str::uuid() . '.' . $file->extension();
+    },
+],
 ```
 
 Reset:
 ```php
-PathConfigurator::clear();
+'path' => ['resolver' => null];
 ```
 
 ## Services
