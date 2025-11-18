@@ -52,7 +52,7 @@ Provides read operations and download helpers.
 | `buildModelQuery(Model $model, array $filters = []): Builder` | Provides direct access to the base model query used by every retrieval helper. |
 | `buildUserQuery(int|string $userId, array $filters = []): Builder` | Provides direct access to the user-scoped builder. |
 | `download(Asset $asset): string`                              | Reads the asset file from storage and returns its contents. Throws when the file is missing. |
-| `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL when the disk supports it or falls back to a `data:` payload.      |
+| `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL when the disk supports it or falls back to a signed streaming route.      |
 
 ### `Atlas\Assets\Services\AssetCleanupService`
 

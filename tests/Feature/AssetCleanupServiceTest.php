@@ -64,6 +64,25 @@ final class AssetCleanupServiceTest extends TestCase
         self::assertSoftDeleted($asset);
     }
 
+    public function test_delete_respects_configured_disk(): void
+    {
+        Storage::fake('shared-disk');
+        config()->set('atlas-assets.disk', 'shared-disk');
+        config()->set('atlas-assets.delete_files_on_soft_delete', true);
+
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/delete-from-shared.doc',
+        ]);
+
+        Storage::disk('shared-disk')->put('files/delete-from-shared.doc', 'content');
+
+        $service = $this->app->make(AssetCleanupService::class);
+
+        $service->delete($asset);
+
+        Storage::disk('shared-disk')->assertMissing('files/delete-from-shared.doc');
+    }
+
     public function test_purge_removes_soft_deleted_assets_and_files_in_chunks(): void
     {
         $service = $this->app->make(AssetCleanupService::class);

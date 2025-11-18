@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
-use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Atlas\Assets\Support\DiskResolver;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Class AssetRetrievalService
@@ -22,8 +23,7 @@ use RuntimeException;
 class AssetRetrievalService
 {
     public function __construct(
-        private readonly FilesystemFactory $filesystem,
-        private readonly Repository $config
+        private readonly DiskResolver $diskResolver
     ) {}
 
     public function find(int|string $id): ?Asset
@@ -104,11 +104,20 @@ class AssetRetrievalService
             try {
                 return $disk->temporaryUrl($asset->file_path, Carbon::now()->addMinutes($minutes));
             } catch (RuntimeException) {
-                // Fall back to inline response below.
+                // Fall back to signed streaming response below.
             }
         }
 
-        return $this->inlineDataUrl($disk, $asset);
+        return $this->signedStreamUrl($asset, $minutes);
+    }
+
+    public function stream(Asset $asset): StreamedResponse
+    {
+        $disk = $this->disk();
+
+        $this->guardFileExists($disk, $asset);
+
+        return $this->streamResponse($disk, $asset);
     }
 
     /**
@@ -170,9 +179,7 @@ class AssetRetrievalService
 
     private function disk(): Filesystem
     {
-        $disk = $this->config->get('atlas-assets.disk', 's3');
-
-        return $this->filesystem->disk($disk);
+        return $this->diskResolver->resolve();
     }
 
     private function supportsTemporaryUrls(Filesystem $disk): bool
@@ -180,15 +187,39 @@ class AssetRetrievalService
         return method_exists($disk, 'temporaryUrl');
     }
 
-    private function inlineDataUrl(Filesystem $disk, Asset $asset): string
+    private function signedStreamUrl(Asset $asset, int $minutes): string
     {
-        $this->guardFileExists($disk, $asset);
+        return URL::temporarySignedRoute(
+            'atlas-assets.stream',
+            Carbon::now()->addMinutes($minutes),
+            [
+                'asset' => $asset->getKey(),
+            ]
+        );
+    }
 
-        $contents = $disk->get($asset->file_path);
-        $base64 = base64_encode($contents);
-        $mime = $asset->file_type ?: 'application/octet-stream';
+    private function streamResponse(Filesystem $disk, Asset $asset): StreamedResponse
+    {
+        $stream = $disk->readStream($asset->file_path);
 
-        return sprintf('data:%s;base64,%s', $mime, $base64);
+        if ($stream === false) {
+            throw new RuntimeException(sprintf('Asset file [%s] could not be read from disk.', $asset->file_path));
+        }
+
+        $headers = [
+            'Content-Type' => $asset->file_type ?: 'application/octet-stream',
+            'Content-Length' => (string) $asset->file_size,
+            'Content-Disposition' => sprintf('inline; filename="%s"', $asset->name),
+            'Cache-Control' => 'max-age=300, private',
+        ];
+
+        return response()->stream(function () use ($stream): void {
+            while (! feof($stream)) {
+                echo fread($stream, 8192);
+            }
+
+            fclose($stream);
+        }, 200, $headers);
     }
 
     private function guardFileExists(Filesystem $disk, Asset $asset): void

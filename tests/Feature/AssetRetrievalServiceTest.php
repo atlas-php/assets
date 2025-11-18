@@ -12,7 +12,9 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 
 /**
@@ -168,6 +170,23 @@ final class AssetRetrievalServiceTest extends TestCase
         self::assertSame('content', $service->download($asset));
     }
 
+    public function test_download_uses_configured_disk(): void
+    {
+        Storage::fake('shared-disk');
+        config()->set('atlas-assets.disk', 'shared-disk');
+
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/configured.doc',
+            'file_type' => 'application/msword',
+        ]);
+
+        Storage::disk('shared-disk')->put('files/configured.doc', 'configured-content');
+
+        $service = $this->app->make(AssetRetrievalService::class);
+
+        self::assertSame('configured-content', $service->download($asset));
+    }
+
     public function test_download_throws_when_file_missing(): void
     {
         $asset = Asset::factory()->create([
@@ -214,7 +233,7 @@ final class AssetRetrievalServiceTest extends TestCase
         self::assertSame('https://temp.example/files/report.pdf?signature=abc', $url);
     }
 
-    public function test_temporary_url_falls_back_to_inline_download(): void
+    public function test_temporary_url_falls_back_to_signed_stream(): void
     {
         Storage::fake('inline');
         config()->set('atlas-assets.disk', 'inline');
@@ -234,7 +253,18 @@ final class AssetRetrievalServiceTest extends TestCase
 
         $url = $service->temporaryUrl($asset);
 
-        self::assertStringStartsWith('data:application/zip;base64,', $url);
+        $request = Request::create($url);
+
+        self::assertTrue(URL::hasValidSignature($request));
+
+        $response = $this->get($url);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/zip');
+        $response->assertHeader('Content-Disposition', sprintf('inline; filename="%s"', $asset->name));
+        $response->assertHeader('Content-Length', (string) $asset->file_size);
+        $response->assertHeader('Cache-Control', 'max-age=300, private');
+        self::assertSame('archive-content', $response->streamedContent());
     }
 }
 
