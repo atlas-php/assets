@@ -11,8 +11,8 @@ All coding standards, architecture rules, and naming conventions live in **[AGEN
 Run all three commands and ensure **zero errors**:
 
 ```bash
-./vendor/bin/pint
-./vendor/bin/phpstan --debug
+composer lint
+composer analyse
 composer test
 ```
 
