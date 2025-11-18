@@ -98,6 +98,8 @@ Assets::delete($asset);
 Assets::purge(); // removes all soft deleted assets
 ```
 
+Enable immediate file deletion during a soft delete by setting `delete_files_on_soft_delete` to `true` in `config/atlas-assets.php`; otherwise, files remain on disk until purged.
+
 ## Custom Pathing
 
 Atlas Assets supports both pattern-based pathing and fully custom resolvers.

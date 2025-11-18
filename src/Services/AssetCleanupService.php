@@ -26,6 +26,10 @@ class AssetCleanupService
     {
         $asset->delete();
 
+        if (! $this->shouldDeleteFilesOnSoftDelete()) {
+            return;
+        }
+
         $this->deleteFile($asset->file_path);
     }
 
@@ -62,6 +66,11 @@ class AssetCleanupService
         if ($disk->exists($path)) {
             $disk->delete($path);
         }
+    }
+
+    private function shouldDeleteFilesOnSoftDelete(): bool
+    {
+        return (bool) $this->config->get('atlas-assets.delete_files_on_soft_delete', false);
     }
 
     private function disk(): Filesystem

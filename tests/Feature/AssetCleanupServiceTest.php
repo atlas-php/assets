@@ -36,11 +36,31 @@ final class AssetCleanupServiceTest extends TestCase
 
         Storage::disk('s3')->put('files/delete.doc', 'content');
 
+        config()->set('atlas-assets.delete_files_on_soft_delete', true);
+
         $service = $this->app->make(AssetCleanupService::class);
 
         $service->delete($asset);
 
         Storage::disk('s3')->assertMissing('files/delete.doc');
+        self::assertSoftDeleted($asset);
+    }
+
+    public function test_delete_preserves_file_when_config_disabled(): void
+    {
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/keep.doc',
+        ]);
+
+        Storage::disk('s3')->put('files/keep.doc', 'content');
+
+        config()->set('atlas-assets.delete_files_on_soft_delete', false);
+
+        $service = $this->app->make(AssetCleanupService::class);
+
+        $service->delete($asset);
+
+        Storage::disk('s3')->assertExists('files/keep.doc');
         self::assertSoftDeleted($asset);
     }
 
