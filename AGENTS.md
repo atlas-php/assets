@@ -34,7 +34,7 @@ Example:
  * Class UserWebhookService
  *
  * Handles webhook registration, processing, and retry logic for user-related events.
- * Defined by PRD: WebhookStation — Outbound Delivery Rules.
+ * Defined by PRD: Send Webhook Relay — Delivery Rules.
  */
 ```
 
@@ -129,7 +129,7 @@ Each package must include:
 
 Before committing any change:
 
-1. Run Pint for formatting: `./vendor/bin/pint`
+1. Run Pint for formatting: `composer lint`
 2. Run tests: `composer test`
 3. Run static analysis: `composer analyse`
 4. Verify autoload & discovery: `composer dump-autoload`
