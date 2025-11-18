@@ -1,48 +1,43 @@
 # Atlas Assets
 
-**Atlas Assets** is a Laravel package that provides a unified system for uploading, organizing, and retrieving files across any storage backend. It centralizes asset metadata into a single table, supports model associations, and gives you full control over how file paths are generated.
+**Atlas Assets** provides a simple, unified API for uploading, organizing, and retrieving files across any Laravel storage disk. Every upload becomes a first‑class `Asset` with consistent metadata, model associations, and configurable pathing.
 
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
 - [Uploading Files](#uploading-files)
 - [Restricting File Extensions](#restricting-file-extensions)
+- [Limiting File Size](#limiting-file-size)
 - [Retrieving Files](#retrieving-files)
 - [Managing Assets](#managing-assets)
 - [Custom Pathing](#custom-pathing)
-- [Also See](#also-see)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
-Atlas Assets removes the complexity of file storage by offering one consistent API for every type of upload. Files can be stored on S3, local disks, or any Laravel-supported driver. Each file becomes an `Asset` record containing metadata such as size, path, type, and optional labels or categories.  
-
-It also supports polymorphic relationships, allowing assets to be tied to any model in your application.
+Atlas Assets removes the friction of handling files by giving you a single, consistent interface for storing uploads, attaching them to models, retrieving URLs, and managing metadata. It supports any Laravel disk, polymorphic relationships, temporary URLs, and custom path generation.
 
 ## Installation
 ```bash
 composer require atlas-php/assets
 ```
 
-After installation publish the configuration and migrations:
-
+Publish config and migrations:
 ```bash
 php artisan vendor:publish --tag=atlas-assets-config
 php artisan vendor:publish --tag=atlas-assets-migrations
 ```
 
-Full installation steps: [Install Guide](./docs/Install.md)
+For full installation steps: [Install Guide](./docs/Install.md)
 
 ## Uploading Files
 
 Basic upload:
 ```php
-use Atlas\Assets\Facades\Assets;
-
-$asset = Assets::upload($request->file('document'));
+$asset = Assets::upload($request->file('file'));
 ```
 
-Attach an asset to a model:
+Attach to a model:
 ```php
 $asset = Assets::uploadForModel($post, $request->file('image'));
 ```
@@ -50,54 +45,48 @@ $asset = Assets::uploadForModel($post, $request->file('image'));
 Upload with attributes:
 ```php
 $asset = Assets::upload($request->file('file'), [
-    'user_id' => auth()->id(),
-    'label'   => 'cover',
-    'category'=> 'images',
+    'label' => 'cover',
+    'category' => 'images',
 ]);
 ```
 
 ## Restricting File Extensions
 
-Atlas Assets can enforce whitelist and blocklist rules via `config/atlas-assets.php`:
-
+Define whitelist and blocklist rules in `config/atlas-assets.php`:
 ```php
 'uploads' => [
-    'allowed_extensions' => ['pdf', 'png', 'jpg'], // optional whitelist
-    'blocked_extensions' => ['exe', 'bat'],        // optional blocklist
+    'allowed_extensions' => ['pdf', 'png', 'jpg'],
+    'blocked_extensions' => ['exe', 'bat'],
 ],
 ```
 
-If the whitelist is populated, uploads must match one of the allowed extensions. Blocklisted extensions are always rejected, even when a whitelist is configured.
-
-You may scope a one-off whitelist by passing `allowed_extensions` to the upload helpers:
-
+Override per upload:
 ```php
-$asset = Assets::upload($request->file('file'), [
-    'allowed_extensions' => ['csv'], // overrides config whitelist for this call only
+Assets::upload($file, [
+    'allowed_extensions' => ['csv'],
 ]);
 ```
 
-Blocklisted extensions still apply when overriding the whitelist.
+## Limiting File Size
 
-### Limiting File Size
-
-Uploads are capped at **10 MB** by default. Configure `uploads.max_file_size` (bytes) to change or disable it:
-
+Default max upload size is **10 MB**. Configure globally:
 ```php
 'uploads' => [
-    'max_file_size' => 20 * 1024 * 1024, // 20 MB
+    'max_file_size' => 20 * 1024 * 1024, // bytes
 ],
 ```
 
-Per-upload overrides accept integers (bytes) or `null` (unlimited):
-
+Override per upload:
 ```php
-$asset = Assets::upload($request->file('video'), [
-    'max_upload_size' => 50 * 1024 * 1024, // raise limit for this call
+Assets::upload($file, [
+    'max_upload_size' => 50 * 1024 * 1024,
 ]);
+```
 
-$asset = Assets::upload($request->file('archive'), [
-    'max_upload_size' => null, // disable limit for this call only
+Disable for a single upload:
+```php
+Assets::upload($file, [
+    'max_upload_size' => null,
 ]);
 ```
 
@@ -108,23 +97,17 @@ Find an asset:
 $asset = Assets::find($id);
 ```
 
-List assets for a model (returns an Eloquent builder so you control execution):
+List for a model:
 ```php
-$images = Assets::listForModel($post)->get();
+$images = Assets::forModel($post)->get();
 ```
 
-Use fluent aliases for readability or build paginators directly:
-```php
-$images = Assets::forModel($post, ['label' => 'hero'])->limit(5)->get();
-$userAssets = Assets::forUser(auth()->id())->paginate();
-```
-
-Temporary URL (S3, Spaces, etc.):
+Temporary URL:
 ```php
 $url = Assets::temporaryUrl($asset, 10);
 ```
 
-Download file contents:
+Download contents:
 ```php
 $content = Assets::download($asset);
 ```
@@ -133,49 +116,39 @@ $content = Assets::download($asset);
 
 Update metadata:
 ```php
-Assets::update($asset, [
-    'name' => 'NewName.pdf',
-    'label' => 'hero',
-    'category' => 'images',
-]);
+Assets::update($asset, ['label' => 'hero']);
 ```
 
-Replace the underlying file:
+Replace file:
 ```php
-Assets::replace($asset, $request->file('new_file'), ['label' => 'updated']);
+Assets::replace($asset, $request->file('new'));
 ```
 
 Soft delete and purge:
 ```php
 Assets::delete($asset);
-Assets::purge(); // removes all soft deleted assets
+Assets::purge();
 ```
-
-Enable immediate file deletion during a soft delete by setting `delete_files_on_soft_delete` to `true` in `config/atlas-assets.php`; otherwise, files remain on disk until purged.
 
 ## Custom Pathing
 
-Atlas Assets supports both pattern-based pathing and fully custom resolvers.
-
-### Pattern Example
+Pattern-based pathing:
 ```php
 'pattern' => '{model_type}/{model_id}/{uuid}.{extension}'
 ```
 
-### Callback Example
+Callback-based:
 ```php
-use Atlas\Assets\Support\PathConfigurator;
-
-PathConfigurator::useCallback(fn ($model, $file, $attributes) =>
-    'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
-    $file->getClientOriginalExtension()
+PathConfigurator::useCallback(fn ($model, $file, $attrs) =>
+    'uploads/' . ($attrs['user_id'] ?? 'anon') . '/' . uniqid() . '.' . $file->extension()
 );
 ```
 
-Revert to default:
+Reset to default:
 ```php
 PathConfigurator::clear();
 ```
+
 
 ## Also See
 - [PRD Overview](./docs/PRD/Atlas-Assets.md)
@@ -184,8 +157,7 @@ PathConfigurator::clear();
 - [Install Guide](./docs/Install.md)
 
 ## Contributing
-See the [Contributing Guide](./CONTRIBUTING.md).  
-All work must align with PRDs and agent workflow rules defined in [AGENTS.md](./AGENTS.md).
+See the [Contributing Guide](./CONTRIBUTING.md).
 
 ## License
 MIT — see [LICENSE](./LICENSE).
