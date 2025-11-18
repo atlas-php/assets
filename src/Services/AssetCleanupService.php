@@ -29,18 +29,26 @@ class AssetCleanupService
         $this->deleteFile($asset->file_path);
     }
 
-    public function purge(): int
+    private const PURGE_CHUNK_SIZE = 100;
+
+    public function purge(int $chunkSize = self::PURGE_CHUNK_SIZE): int
     {
-        $count = 0;
+        $purgedCount = 0;
 
-        Asset::onlyTrashed()->each(function (Asset $asset) use (&$count): void {
-            $this->deleteFile($asset->file_path);
+        $chunkSize = max(1, $chunkSize);
 
-            $asset->forceDelete();
-            $count++;
-        });
+        Asset::onlyTrashed()
+            ->orderBy('id')
+            ->chunkById($chunkSize, function (iterable $assets) use (&$purgedCount): void {
+                foreach ($assets as $asset) {
+                    $this->deleteFile($asset->file_path);
 
-        return $count;
+                    $asset->forceDelete();
+                    $purgedCount++;
+                }
+            });
+
+        return $purgedCount;
     }
 
     private function deleteFile(string $path): void
