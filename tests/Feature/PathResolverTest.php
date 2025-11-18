@@ -105,6 +105,27 @@ final class PathResolverTest extends TestCase
 
         $resolver->resolve($file);
     }
+
+    public function test_callback_resolver_can_branch_on_type_attribute(): void
+    {
+        config()->set('atlas-assets.path.resolver', static function (?Model $model, UploadedFile $file, array $attributes): string {
+            $segment = match ($attributes['type'] ?? null) {
+                'product_image' => 'products',
+                'form_image' => 'forms',
+                default => 'general',
+            };
+
+            return sprintf('%s/%s', $segment, strtolower($file->getClientOriginalName()));
+        });
+
+        $resolver = $this->app->make(PathResolver::class);
+
+        $productPath = $resolver->resolve(UploadedFile::fake()->image('Hero.PNG'), null, ['type' => 'product_image']);
+        $formPath = $resolver->resolve(UploadedFile::fake()->image('Signature.PNG'), null, ['type' => 'form_image']);
+
+        self::assertSame('products/hero.png', $productPath);
+        self::assertSame('forms/signature.png', $formPath);
+    }
 }
 
 /**

@@ -112,6 +112,21 @@ Defined directly in `config/atlas-assets.php`:
 
 Pathing can reflect tenancy, model type, user attributes, or any custom logic.
 
+Need per-context directories? Route on `type`, `category`, or any other attribute supplied with the upload call:
+```php
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
+        $directory = match ($attributes['type'] ?? null) {
+            'product_image' => 'products',
+            'form_image' => 'forms',
+            default => 'general',
+        };
+
+        return $directory . '/' . uniqid() . '.' . $file->extension();
+    },
+],
+```
+
 ## Storage & Pathing
 ### Disk & Visibility
 - Works with any Laravel disk (`s3`, `local`, DigitalOcean Spaces, etc.)

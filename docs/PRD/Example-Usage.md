@@ -247,6 +247,21 @@ Define a resolver in `config/atlas-assets.php` to control how `sort_order` is ge
 ],
 ```
 
+### Type-specific Routing
+```php
+'path' => [
+    'resolver' => function (?Illuminate\Database\Eloquent\Model $model, Illuminate\Http\UploadedFile $file, array $attributes): string {
+        $directory = match ($attributes['type'] ?? null) {
+            'product_image' => 'products',
+            'form_image' => 'forms',
+            default => 'shared',
+        };
+
+        return $directory . '/' . uniqid() . '.' . $file->extension();
+    },
+],
+```
+
 ### Reset to default pattern
 ```php
 'path' => ['resolver' => null];

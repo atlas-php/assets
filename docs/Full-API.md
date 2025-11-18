@@ -70,6 +70,9 @@ Manages deletions and purging of assets.
 
 Service for computing storage paths using `config('atlas-assets.path.pattern')` or the optional
 `config('atlas-assets.path.resolver')` callback.
+Callbacks receive the uploaded file plus the metadata array passed to the upload helpers
+(`group_id`, `user_id`, `type`, `category`, etc.), allowing per-context directories such as
+`products/*` vs `forms/*`.
 
 - `resolve(UploadedFile $file, ?Model $model = null, array $attributes = []): string`
 
