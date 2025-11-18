@@ -58,7 +58,7 @@ Provides read operations and download helpers.
 | `cursorPaginateForModel(Model $model, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Streams model assets via cursor-based pagination.                               |
 | `cursorPaginateForUser(int|string $userId, array $filters = [], int $perPage = 15, string $cursorName = 'cursor', ?Cursor $cursor = null): CursorPaginator` | Streams user assets via cursor-based pagination.                               |
 | `download(Asset $asset): string`                              | Reads the asset file from storage and returns its contents. Throws when the file is missing. |
-| `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL when the disk supports it or falls back to a `data:` payload.      |
+| `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL when the disk supports it or falls back to a signed streaming route.      |
 
 ### `Atlas\Assets\Services\AssetCleanupService`
 
