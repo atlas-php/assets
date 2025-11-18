@@ -1,6 +1,6 @@
 # Atlas Assets
 
-Atlas Assets is a lightweight, unified system for storing and retrieving files in Laravel. It provides a single Asset model, a simple API, and flexible path resolution—all while remaining completely storage‑agnostic.
+Atlas Assets provides a unified, storage‑agnostic system for handling all uploaded files in Laravel. It standardizes how assets are stored, associated with models, retrieved, sorted, and managed—removing the need for repetitive, project‑specific file logic.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -10,200 +10,189 @@ Atlas Assets is a lightweight, unified system for storing and retrieving files i
 - [Storage & Pathing](#storage--pathing)
 - [Services](#services)
 - [Configuration](#configuration)
+- [Also See](#also-see)
 
 ## Overview
-Atlas Assets centralizes file handling so your application doesn’t need to. Every upload becomes an Asset record with metadata stored in one table. Files can belong to models, users, or nothing at all, and can be stored on any Laravel filesystem disk. Path generation is fully configurable using patterns or callbacks.
+Atlas Assets centralizes all file behavior behind a single `Asset` model with consistent metadata and a clean API. Every upload becomes a first‑class asset stored in the `atlas_assets` table. Assets may belong to users, other models, or exist standalone, with configurable path generation, sorting rules, and upload validation.
+
+The system is designed to:
+- Simplify file handling across large applications
+- Offer consistent semantics for associating files with any model
+- Provide predictable metadata and sorting behavior
+- Support both simple and advanced use cases (multi‑tenant grouping, custom pathing, dynamic sort logic)
 
 ## Asset Data Model
-Atlas Assets stores all metadata in a single table (default: `atlas_assets`).
+Atlas Assets stores all metadata in one table (default: `atlas_assets`).
 
 Primary Eloquent model: `Atlas\Assets\Models\Asset`
 
-Relationships exposed by the model:
-- `model(): MorphTo` — back-reference to any owning model via the `model_type` / `model_id` columns.
-- `user(): BelongsTo` — optional relationship to the authenticated user model configured in the consuming app.
+### Key Columns
+| Field                     | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| id                        | Primary key                                                                 |
+| group_id                  | Optional grouping/tenant identifier (e.g., account, organization)           |
+| user_id                   | Optional owner/user relationship                                            |
+| model_type/model_id       | Polymorphic relation to any Laravel model                                   |
+| type                      | Consumer‑defined classification label (e.g., hero, thumbnail, invoice)      |
+| sort_order                | Auto‑generated or manually assigned ordering                                |
+| file_mime_type            | MIME type inferred from upload                                              |
+| file_ext                  | File extension without dot                                                  |
+| file_path                 | Storage path on the configured disk                                         |
+| file_size                 | File size in bytes                                                          |
+| name                      | Human‑readable display name                                                 |
+| original_file_name        | Client‑provided filename                                                    |
+| label/category            | Optional classification metadata                                            |
+| timestamps + soft deletes | Lifecycle management                                                        |
 
-| Field                     | Summary                                               |
-|---------------------------|-------------------------------------------------------|
-| `id`                      | Primary key                                           |
-| `group_id`                | Optional external grouping/tenancy key               |
-| `user_id`                 | Optional owner                                       |
-| `model_type` / `model_id` | Optional polymorphic association                     |
-| `type`                    | Consumer-defined enum/label for classification       |
-| `sort_order`              | Integer used for manual or auto sequencing           |
-| `file_mime_type`          | MIME type detected from the uploaded file            |
-| `file_ext`                | Lowercase file extension (no dot)                    |
-| `file_path`               | Storage path                                         |
-| `file_size`               | Bytes                                                |
-| `name`                    | Display name                                         |
-| `original_file_name`      | Client filename                                      |
-| `label` / `category`      | Optional classification                              |
-| Timestamps + soft deletes | Lifecycle fields                                     |
-
-Assets can be free‑standing or attached to any model. When attached, the owning
-model should declare a morph relationship named `model` to match the asset’s
-internal `morphTo` call.
-
-`group_id` acts as a lightweight foreign key for multi-tenant or account-based
-relationships. Consuming apps may set it to any identifier (e.g., account or
-organization ID) and use it when scoping assets or generating custom storage
-paths. It is entirely optional and independent from `user_id`.
-
-`type` is an optional consumer-defined enum/string used to categorize assets
-within a model (e.g., `hero`, `thumbnail`, `contract`). It participates in the
-default sort scope so each type maintains its own ordering sequence.
-
-`sort_order` records either a consumer-specified value or the next sequential
-number produced by the configurable sort resolver. The default resolver scopes
-auto-incrementing values by `model_type`, `model_id`, and `type`, but consumers
-may change the scope array (`atlas-assets.sort.scopes`) or register a callback
-to implement arbitrary ordering logic (e.g., grouping by `group_id`).
-
-### Example Polymorphic Setup
-
+### Polymorphic Relationship Example
 ```php
-use Atlas\Assets\Models\Asset;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-
-class Post extends Model
-{
-    public function assets(): MorphMany
-    {
+class Post extends Model {
+    public function assets() {
         return $this->morphMany(Asset::class, 'model');
     }
 
-    public function heroImage(): MorphOne
-    {
+    public function heroImage() {
         return $this->morphOne(Asset::class, 'model')->where('label', 'hero');
     }
 }
-
-class Submission extends Model
-{
-    public function attachments(): MorphMany
-    {
-        return $this->morphMany(Asset::class, 'model')
-            ->where('category', 'submission');
-    }
-}
 ```
 
-Each model defines the `morphMany`/`morphOne` relationship using the shared
-`model` morph name. Assets can then be uploaded through the `AssetService` or
-`Assets` facade using `uploadForModel($post, $file)` or
-`uploadForModel($submission, $file)` to automatically populate the polymorphic
-columns.
+### Notes on Metadata Fields
+- **group_id** is useful for multi‑tenant architectures (e.g., scoping assets by account).
+- **type** participates in default sort behavior, allowing logical ordering per asset category.
+- **sort_order** can be generated automatically or assigned manually per upload/update.
 
 ## Core Responsibilities
-### 1. Central Asset Storage
-- One unified table for all files
-- Optional model and user association
+### 1. Centralized Asset Storage
+- Every file is represented by a single, normalized `Asset` record.
+- Supports model association, user ownership, or standalone assets.
+- Prevents scattered, inconsistent storage patterns across the codebase.
 
 ### 2. File Operations
-- Upload, replace, soft delete, purge
-- Generate temporary URLs (S3 or other disks)
-- Validate existence and read file contents
+Atlas Assets handles all major file lifecycle actions:
+- Upload
+- Replace file while retaining metadata
+- Soft delete asset records
+- Purge soft‑deleted assets and optionally delete files
 
-### 3. Metadata Management
-- Track size, type, path, and names
-- Support labels and categories
-- Rename assets without moving files (unless replaced)
+Supports:
+- Temporary signed URLs for S3 and compatible disks
+- Direct download and existence checking
 
-### 4. Flexible Pathing
-- Pattern placeholders (`{model_id}`, `{uuid}`, `{extension}`, etc.)
-- Optional callback resolver for full control
-- Automatic cleanup of empty path segments
+### 3. Metadata & Classification
+- Labels, categories, and types offer flexible classification.
+- `name` can be updated without moving the underlying file.
+- Changing `file_mime_type`, `extension`, or storage path occurs automatically when replacing a file.
 
-## What It Does Not Do
-Atlas Assets intentionally avoids extra concerns:
+### 4. Sorting Behavior
+Sorting is fully configurable:
+- Automatic incremental sorting per scope (model, type, etc.)
+- Optional custom resolver for dynamic sorting rules (e.g., weight by category)
+- Manual sort-order override when needed
 
-- Image processing or thumbnailing
-- CDN/caching behavior
-- Version history for files
-- Authentication or authorization
-- Defining meaning for labels/categories
+### 5. Flexible Pathing
+Two approaches:
+
+#### Pattern‑based
+Uses placeholders such as:
+```
+{model_type}/{model_id}/{uuid}.{extension}
+```
+
+#### Callback‑based
+```php
+PathConfigurator::useCallback(function ($model, $file, $attributes) {
+    return 'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
+        $file->getClientOriginalExtension();
+});
+```
+
+Pathing can reflect tenancy, model type, user attributes, or any custom logic.
 
 ## Storage & Pathing
 ### Disk & Visibility
-- Works with any Laravel disk (S3, local, Spaces, etc.)
-- Visibility defaults to `public`
+- Works with any Laravel disk (`s3`, `local`, DigitalOcean Spaces, etc.)
+- Default visibility: `public`
+- Supports signed temporary URLs when the disk allows it
 
-### Pattern-Based Pathing
-Example pattern:
+### Pattern‑Based Pathing
+Placeholders include:
+- `model_type`, `model_id`
+- `group_id`, `user_id`
+- `uuid`, `random`
+- `file_name`, `original_name`
+- `extension`
+- `date:*` formats (`date:Y/m/d`, etc.)
 
-```
-{model_type}/{model_id}/{file_name}.{extension}
-```
-
-### Callback-Based Pathing
-For full custom logic:
-
+### Callback Pathing
+For full dynamic control, such as multi‑tenant storage buckets:
 ```php
-PathConfigurator::useCallback(fn ($model, $file, $attributes) =>
-    'uploads/' . ($attributes['user_id'] ?? 'anon') . '/' . uniqid() . '.' .
-    $file->getClientOriginalExtension()
-);
+PathConfigurator::useCallback(function ($model, $file, $attrs) {
+    return 'accounts/' . ($attrs['group_id'] ?? 'global') . '/' . Str::uuid() . '.' . $file->extension();
+});
 ```
 
-Use `PathConfigurator::clear()` to revert to the configured pattern.
+Reset:
+```php
+PathConfigurator::clear();
+```
 
 ## Services
 ### AssetService
-Handles creation and updates:
-- `upload()`, `uploadForModel()`
-- `update()`, `replace()`
+Handles all write operations:
+- `upload()`
+- `uploadForModel()`
+- `update()`
+- `replace()`
+
+Supports per‑call overrides for:
+- allowed extensions
+- blocklist
+- size limits
+- custom sort order
 
 ### AssetRetrievalService
-Read operations:
-- `find()`, `forModel()`, `forUser()`, `listForModel()`, `listForUser()`, `buildModelQuery()`, `buildUserQuery()`
+Handles reads:
+- `find()`
+- `forModel()`, `forUser()`
+- `listForModel()`, `listForUser()`
 - `download()`, `exists()`
 - `temporaryUrl()`
 
+Also exposes base query builders for advanced consumers.
+
 ### AssetCleanupService
-Cleanup operations:
-- `delete()`
-- `purge()`
+Handles cleanup:
+- `delete()` (soft delete)
+- `purge()` (permanent deletion of files + records)
 
 ## Configuration
-Defined in `config/atlas-assets.php`:
-- Disk + visibility
-- Delete-on-soft-delete flag
-- Table name + DB connection
-- Path pattern or resolver callback
-- Sort scoping via `sort.scopes` plus optional resolver callbacks
-- Upload filtering via `uploads.allowed_extensions` and `uploads.blocked_extensions`
-- Maximum upload size via `uploads.max_file_size` (defaults to 10 MB)
+Located in: `config/atlas-assets.php`
 
-Environment overrides:
+### Upload Rules
+- `allowed_extensions`: restrict allowed types
+- `blocked_extensions`: extensions always rejected
+- `max_file_size`: default 10 MB
+- Per‑upload overrides using attributes
+
+### Pathing Rules
+- Provide a pattern string
+- Or define a callback resolver
+
+### Sort Rules
+- `sort.scopes` controls grouping
+- `sort.resolver` receives full metadata for custom ordering
+- Manual `sort_order` bypasses both
+
+### Environment Variables
 ```
 ATLAS_ASSETS_DISK=
 ATLAS_ASSETS_VISIBILITY=
 ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=
 ```
 
-### Extension Filtering Rules
-- `uploads.allowed_extensions`: optional whitelist (case-insensitive) restricting uploads to specific extensions.
-- `uploads.blocked_extensions`: optional blocklist that always rejects the listed extensions.
-- Entries accept values with or without a leading dot; they are normalized to lowercase without dots.
-- Blocklisted extensions always win—even when the file also exists in the whitelist or a per-upload override.
-- Passing `allowed_extensions` to `AssetService::upload`, `uploadForModel`, or the matching Facade method overrides the configured whitelist for that single call. The override is treated as a strict allowed list; the provided extension must exist in the array.
-
-### File Size Limits
-- `uploads.max_file_size` defines the maximum upload size in bytes (default: `10 * 1024 * 1024`, or 10 MB). Set to `null` to disable size enforcement globally.
-- Per-upload overrides may set `max_upload_size` to a specific byte limit or `null` to bypass limits for that call.
-- Oversized uploads must raise a dedicated exception so consuming apps can gracefully notify users.
-
-### Sort Order Rules
-- `sort.scopes`: ordered list of columns used to scope sequential sort increments (defaults to `model_type`, `model_id`, `type`).
-- `sort.resolver`: optional callable `(?Model $model, array $context): int` when consumers need a bespoke strategy (e.g., weighting by account or category).
-- Providing a `sort_order` attribute to any write method bypasses automatic calculation, enabling manual reordering.
-- Setting `sort.scopes` to `null` disables automatic increments entirely so assets remain at their default order (0) unless explicitly set.
-
 ## Also See
-- [Full API Reference](../Full-API.md)
 - [Example Usage](./Example-Usage.md)
+- [Full API Reference](../Full-API.md)
 - [Installation Guide](../Install.md)
-- [Package README](../../README.md)
- 
+- [README](../../README.md)
