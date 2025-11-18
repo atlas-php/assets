@@ -53,7 +53,7 @@ final class AssetServiceTest extends TestCase
         $file = UploadedFile::fake()->create('Document.pdf', 120, 'application/pdf');
 
         $service = $this->app->make(AssetService::class);
-        $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract']);
+        $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract', 'type' => ' hero ']);
 
         Storage::disk('s3')->assertExists($asset->file_path);
         self::assertSame('document.pdf', $asset->file_path);
@@ -65,6 +65,7 @@ final class AssetServiceTest extends TestCase
         self::assertSame(44, $asset->group_id);
         self::assertSame(0, $asset->sort_order);
         self::assertSame('contract', $asset->label);
+        self::assertSame('hero', $asset->type);
     }
 
     public function test_upload_assigns_incremental_sort_order_with_default_scope(): void
@@ -107,6 +108,38 @@ final class AssetServiceTest extends TestCase
         );
 
         self::assertSame(20, $asset->sort_order);
+    }
+
+    public function test_default_sort_scope_includes_type_column(): void
+    {
+        $model = new UploadableModel;
+        $model->forceFill(['id' => 8]);
+
+        $service = $this->app->make(AssetService::class);
+
+        $hero = $service->uploadForModel($model, UploadedFile::fake()->create('hero.pdf', 5), ['type' => 'hero']);
+        $thumb = $service->uploadForModel($model, UploadedFile::fake()->create('thumb.pdf', 5), ['type' => 'thumbnail']);
+        $heroTwo = $service->uploadForModel($model, UploadedFile::fake()->create('hero-2.pdf', 5), ['type' => 'hero']);
+
+        self::assertSame(0, $hero->sort_order);
+        self::assertSame(0, $thumb->sort_order);
+        self::assertSame(1, $heroTwo->sort_order);
+    }
+
+    public function test_sort_order_disabled_when_config_scopes_null(): void
+    {
+        config()->set('atlas-assets.sort.scopes', null);
+
+        $model = new UploadableModel;
+        $model->forceFill(['id' => 22]);
+
+        $service = $this->app->make(AssetService::class);
+
+        $first = $service->uploadForModel($model, UploadedFile::fake()->create('first.pdf', 5));
+        $second = $service->uploadForModel($model, UploadedFile::fake()->create('second.pdf', 5));
+
+        self::assertSame(0, $first->sort_order);
+        self::assertSame(0, $second->sort_order);
     }
 
     public function test_custom_sort_order_resolver_callback_is_respected(): void
@@ -223,6 +256,7 @@ final class AssetServiceTest extends TestCase
             'category' => 'images',
             'group_id' => 15,
             'user_id' => 5,
+            'type' => ' header ',
         ]);
 
         $asset->refresh();
@@ -233,6 +267,7 @@ final class AssetServiceTest extends TestCase
         self::assertSame('images', $asset->category);
         self::assertSame(5, $asset->user_id);
         self::assertSame(15, $asset->group_id);
+        self::assertSame('header', $asset->type);
     }
 
     public function test_update_can_change_sort_order_manually(): void

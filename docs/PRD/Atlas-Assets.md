@@ -29,6 +29,7 @@ Relationships exposed by the model:
 | `group_id`                | Optional external grouping/tenancy key               |
 | `user_id`                 | Optional owner                                       |
 | `model_type` / `model_id` | Optional polymorphic association                     |
+| `type`                    | Consumer-defined enum/label for classification       |
 | `sort_order`              | Integer used for manual or auto sequencing           |
 | `file_mime_type`          | MIME type detected from the uploaded file            |
 | `file_ext`                | Lowercase file extension (no dot)                    |
@@ -48,11 +49,15 @@ relationships. Consuming apps may set it to any identifier (e.g., account or
 organization ID) and use it when scoping assets or generating custom storage
 paths. It is entirely optional and independent from `user_id`.
 
+`type` is an optional consumer-defined enum/string used to categorize assets
+within a model (e.g., `hero`, `thumbnail`, `contract`). It participates in the
+default sort scope so each type maintains its own ordering sequence.
+
 `sort_order` records either a consumer-specified value or the next sequential
 number produced by the configurable sort resolver. The default resolver scopes
-auto-incrementing values by `model_type`, `model_id`, and `category`, but
-consumers may change the scope array (`atlas-assets.sort.scopes`) or register a
-callback to implement arbitrary ordering logic (e.g., grouping by `group_id`).
+auto-incrementing values by `model_type`, `model_id`, and `type`, but consumers
+may change the scope array (`atlas-assets.sort.scopes`) or register a callback
+to implement arbitrary ordering logic (e.g., grouping by `group_id`).
 
 ### Example Polymorphic Setup
 
@@ -191,9 +196,10 @@ ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=
 - Oversized uploads must raise a dedicated exception so consuming apps can gracefully notify users.
 
 ### Sort Order Rules
-- `sort.scopes`: ordered list of columns used to scope sequential sort increments (defaults to `model_type`, `model_id`, `category`).
+- `sort.scopes`: ordered list of columns used to scope sequential sort increments (defaults to `model_type`, `model_id`, `type`).
 - `sort.resolver`: optional callable `(?Model $model, array $context): int` when consumers need a bespoke strategy (e.g., weighting by account or category).
 - Providing a `sort_order` attribute to any write method bypasses automatic calculation, enabling manual reordering.
+- Setting `sort.scopes` to `null` disables automatic increments entirely so assets remain at their default order (0) unless explicitly set.
 
 ## Also See
 - [Full API Reference](../Full-API.md)

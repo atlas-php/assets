@@ -88,7 +88,7 @@ class AssetService
             }
         }
 
-        foreach (['name', 'label', 'category'] as $field) {
+        foreach (['name', 'label', 'category', 'type'] as $field) {
             if (array_key_exists($field, $attributes)) {
                 $updates[$field] = $this->sanitizeString($attributes[$field]);
             }
@@ -102,10 +102,16 @@ class AssetService
             $updates['group_id'] = $attributes['group_id'];
         }
 
-        $sortOrder = $this->normalizeSortOrder($attributes['sort_order'] ?? null);
+        if (array_key_exists('sort_order', $attributes)) {
+            if ($attributes['sort_order'] === null) {
+                $updates['sort_order'] = 0;
+            } else {
+                $sortOrder = $this->normalizeSortOrder($attributes['sort_order']);
 
-        if ($sortOrder !== null) {
-            $updates['sort_order'] = $sortOrder;
+                if ($sortOrder !== null) {
+                    $updates['sort_order'] = $sortOrder;
+                }
+            }
         }
 
         if ($updates === []) {
@@ -141,16 +147,16 @@ class AssetService
 
         $label = $this->sanitizeString($attributes['label'] ?? null);
         $category = $this->sanitizeString($attributes['category'] ?? null);
+        $type = $this->sanitizeString($attributes['type'] ?? null);
         $name = $this->sanitizeString($attributes['name'] ?? $fileData['original_name']) ?? $fileData['original_name'];
 
-        $sortOrder = $this->determineInitialSortOrder($model, $attributes, $label, $category);
+        $sortOrder = $this->determineInitialSortOrder($model, $attributes, $label, $category, $type);
 
-        return Asset::query()->create([
+        $data = [
             'user_id' => $attributes['user_id'] ?? null,
             'group_id' => $attributes['group_id'] ?? null,
             'model_type' => $model?->getMorphClass(),
             'model_id' => $model?->getKey(),
-            'sort_order' => $sortOrder,
             'file_mime_type' => $fileData['mime'],
             'file_ext' => $fileData['extension'],
             'file_path' => $fileData['path'],
@@ -159,7 +165,16 @@ class AssetService
             'original_file_name' => $fileData['original_name'],
             'label' => $label,
             'category' => $category,
-        ]);
+            'type' => $type,
+        ];
+
+        if ($sortOrder !== null) {
+            $data['sort_order'] = $sortOrder;
+        }
+
+        $asset = Asset::query()->create($data);
+
+        return $asset->refresh();
     }
 
     /**
@@ -241,7 +256,7 @@ class AssetService
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function determineInitialSortOrder(?Model $model, array $attributes, ?string $label, ?string $category): int
+    private function determineInitialSortOrder(?Model $model, array $attributes, ?string $label, ?string $category, ?string $type): ?int
     {
         $manualSort = $this->normalizeSortOrder($attributes['sort_order'] ?? null);
 
@@ -249,7 +264,7 @@ class AssetService
             return $manualSort;
         }
 
-        $context = $this->buildSortContext($model, $attributes, $label, $category);
+        $context = $this->buildSortContext($model, $attributes, $label, $category, $type);
 
         return $this->sortOrderResolver->next($model, $context);
     }
@@ -258,7 +273,7 @@ class AssetService
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
      */
-    private function buildSortContext(?Model $model, array $attributes, ?string $label, ?string $category): array
+    private function buildSortContext(?Model $model, array $attributes, ?string $label, ?string $category, ?string $type): array
     {
         return [
             'model_type' => $model?->getMorphClass(),
@@ -267,6 +282,7 @@ class AssetService
             'user_id' => $attributes['user_id'] ?? null,
             'category' => $category,
             'label' => $label,
+            'type' => $type,
         ];
     }
 

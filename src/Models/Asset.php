@@ -24,6 +24,7 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
  * @property int|null $user_id
  * @property string|null $model_type
  * @property int|null $model_id
+ * @property string|null $type
  * @property int $sort_order
  * @property string $file_mime_type
  * @property string $file_ext

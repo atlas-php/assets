@@ -24,7 +24,7 @@ class SortOrderResolver
      *
      * @param  array<string, mixed>  $context
      */
-    public function next(?Model $model, array $context = []): int
+    public function next(?Model $model, array $context = []): ?int
     {
         $callback = $this->config->get('atlas-assets.sort.resolver');
 
@@ -40,9 +40,13 @@ class SortOrderResolver
     /**
      * @param  array<string, mixed>  $context
      */
-    private function incrementFromScopes(array $context): int
+    private function incrementFromScopes(array $context): ?int
     {
         $scopes = $this->configuredScopes();
+
+        if ($scopes === []) {
+            return null;
+        }
 
         $query = Asset::query();
 
@@ -72,7 +76,7 @@ class SortOrderResolver
      */
     private function configuredScopes(): array
     {
-        $scopes = $this->config->get('atlas-assets.sort.scopes', ['model_type', 'model_id', 'category']);
+        $scopes = $this->config->get('atlas-assets.sort.scopes');
 
         if (! is_array($scopes) || $scopes === []) {
             return [];

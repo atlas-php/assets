@@ -19,22 +19,21 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('model_type')->nullable();
             $table->unsignedBigInteger('model_id')->nullable();
+            $table->string('type')->nullable()->index();
             $table->unsignedInteger('sort_order')->default(0);
             $table->string('file_mime_type');
             $table->string('file_ext', 20);
-            $table->string('file_path');
+            $table->string('file_path')->index();
             $table->unsignedBigInteger('file_size');
             $table->string('name');
             $table->string('original_file_name');
-            $table->string('label')->nullable();
-            $table->string('category')->nullable();
+            $table->string('label')->nullable()->index();
+            $table->string('category')->nullable()->index();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['model_type', 'model_id']);
-            $table->index('category');
-            $table->index('label');
-            $table->unique('file_path');
+            $table->index(['model_type', 'model_id', 'type']);
         });
     }
 

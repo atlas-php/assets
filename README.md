@@ -48,13 +48,16 @@ $asset = Assets::upload($request->file('file'), [
     'group_id' => $request->input('account_id'),
     'label' => 'cover',
     'category' => 'images',
+    'type' => 'hero',
     'sort_order' => 2,
 ]);
 ```
 
 `group_id` is an optional unsigned big integer column you can use to scope
 assets to accounts, teams, or any additional relationship independent of
-`user_id`. Pass `sort_order` to control ordering manually; omit it to let Atlas
+`user_id`. Use the `type` attribute to tag assets with consumer-defined enums
+such as `hero`, `thumbnail`, or `invoice`; it participates in the default sort
+scope. Pass `sort_order` to control ordering manually; omit it to let Atlas
 Assets calculate the next position automatically within the configured scope.
 
 ## Restricting File Extensions
@@ -141,8 +144,8 @@ Assets::purge();
 
 Assets include a `sort_order` column that defaults to an auto-incremented value
 within the scope defined by `config('atlas-assets.sort.scopes')`
-(`model_type`, `model_id`, `category` by default). Customize the scope or
-register a resolver callback:
+(`model_type`, `model_id`, `type` by default). Customize the scope or register a
+resolver callback:
 
 ```php
 'sort' => [
@@ -150,6 +153,9 @@ register a resolver callback:
     'resolver' => fn ($model, array $context) => ($context['group_id'] ?? 0) * 10,
 ],
 ```
+
+Set `scopes` to `null` to disable automatic increments entirely (assets will use
+the database default of `0` unless you provide a value).
 
 Pass `sort_order` to `upload`, `uploadForModel`, or `update` whenever you need
 manual control:

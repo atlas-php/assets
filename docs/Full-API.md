@@ -33,9 +33,9 @@ Handles uploads, replacements, and metadata updates.
 
 | Method                                                                                                  | Description                                                                                                                                               |
 |---------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `sort_order`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including `group_id`, `sort_order`, per-call `allowed_extensions`, and `max_upload_size`).                                                             |
-| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name`, supports changing `group_id`/`user_id`/`sort_order`, and deletes displaced files when the path changes. |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `type`, `sort_order`, optional `name`, `allowed_extensions`, and `max_upload_size` (bytes or `null`) to override config for this call. |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (including `group_id`, `type`, `sort_order`, per-call `allowed_extensions`, and `max_upload_size`).                                                             |
+| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file. Automatically maintains `original_file_name`, supports changing `group_id`/`user_id`/`type`/`sort_order`, and deletes displaced files when the path changes. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience method that delegates to `update()` with a new file reference.                                                                                |
 
 ### `Atlas\Assets\Services\AssetRetrievalService`
@@ -79,7 +79,7 @@ While generally resolved internally, this service can be injected to manually co
 
 ### `Atlas\Assets\Support\SortOrderResolver`
 
-Generates sequential `sort_order` values by scoping queries with `config('atlas-assets.sort.scopes')` (defaults to `model_type`, `model_id`, `category`). Consumers may also register `sort.resolver` callbacks that receive the model context plus a metadata array for bespoke ordering logic. Passing a `sort_order` attribute to write methods bypasses this resolver for manual control.
+Generates sequential `sort_order` values by scoping queries with `config('atlas-assets.sort.scopes')` (defaults to `model_type`, `model_id`, `type`). Consumers may also register `sort.resolver` callbacks that receive the model context plus a metadata array (including `group_id`, `user_id`, `category`, `type`, etc.) for bespoke ordering logic. Passing a `sort_order` attribute to write methods bypasses this resolver for manual control.
 
 ### Extension Filtering
 
@@ -97,7 +97,7 @@ Uploads honor configuration stored under `atlas-assets.uploads`:
 
 ### Sort Ordering
 
-- `sort.scopes` controls which columns constrain sequential sort assignment (defaults to `model_type`, `model_id`, `category`).
+- `sort.scopes` controls which columns constrain sequential sort assignment (defaults to `model_type`, `model_id`, `type`). Set it to `null` to disable automatic numbering (records keep the database default of `0` unless explicitly set).
 - `sort.resolver` lets consumers return a custom integer order given the model plus a metadata array.
 - Supplying `sort_order` to uploads or updates overrides the calculated value for manual reordering.
 

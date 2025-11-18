@@ -32,6 +32,7 @@ final class AssetModelTest extends TestCase
             'user_id',
             'model_type',
             'model_id',
+            'type',
             'sort_order',
             'file_mime_type',
             'file_ext',
@@ -74,5 +75,6 @@ final class AssetModelTest extends TestCase
         self::assertIsInt($asset->sort_order);
         self::assertIsString($asset->file_mime_type);
         self::assertIsString($asset->file_ext);
+        self::assertTrue($asset->type === null || is_string($asset->type));
     }
 }

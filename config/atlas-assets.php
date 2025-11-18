@@ -24,7 +24,7 @@ return [
     ],
 
     'sort' => [
-        'scopes' => ['model_type', 'model_id', 'category'],
+        'scopes' => ['model_type', 'model_id', 'type'],
 
         'resolver' => null,
     ],

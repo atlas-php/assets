@@ -39,13 +39,15 @@ $asset = Assets::upload($request->file('document'), [
     'label'   => 'invoice',
     'category'=> 'billing',
     'name'    => 'January Invoice.pdf',
+    'type'    => 'invoice_pdf',
     'sort_order' => 2,
 ]);
 
 Use `group_id` for multi-tenant scenarios (accounts, organizations, etc.) where
-assets must be grouped independently from `user_id`. Provide `sort_order` when
-you need to explicitly position the asset; omit it to rely on the configured
-sort resolver.
+assets must be grouped independently from `user_id`. The `type` attribute lets
+you tag assets with consumer-defined enums (e.g., `hero`, `invoice_pdf`) and is
+included in the default sort scope. Provide `sort_order` when you need to
+explicitly position the asset; omit it to rely on the configured sort resolver.
 ```
 
 ## Restricting Extensions
@@ -149,7 +151,9 @@ Assets::update($asset, ['sort_order' => 5]);
 ```
 
 Configure the automatic behavior via `atlas-assets.sort.scopes` or register a
-custom resolver to increment based on fields like `group_id` or `category`.
+custom resolver to increment based on fields like `group_id`, `type`, or
+`category`. Setting `sort.scopes` to `null` disables automatic increments (all
+records remain at the database default of `0` unless you pass `sort_order`).
 
 ## Renaming an Asset
 ```php
