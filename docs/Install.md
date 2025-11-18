@@ -9,32 +9,26 @@ This guide outlines the minimal steps required to install and configure **Atlas 
 - [Publish Migrations](#publish-migrations)
 - [Run Migrations](#run-migrations)
 - [Usage Entry Point](#usage-entry-point)
+- [Also See](#also-see)
 
 ## Install the Package
 ```bash
 composer require atlas-php/assets
 ```
 
-Laravel auto-discovers the service provider, so no manual registration is needed.
+Laravel auto-discovers the service provider, so no manual registration is required.
 
 ## Publish Configuration
-Generate `config/atlas-assets.php`:
+Generate the configuration file:
 
 ```bash
 php artisan vendor:publish --tag=atlas-assets-config
 ```
 
-This file controls disk selection, visibility, table names, path patterns, and resolver callbacks.
-
 ## Configure Disk & Visibility
 Ensure your desired filesystem disk is defined in `config/filesystems.php`.
 
-`atlas-assets.php` options include:
-- `disk` — defaults to `s3`
-- `visibility` — `public` (default) or `private`
-- `delete_files_on_soft_delete` — when `true`, the file is removed from storage during a soft delete; when `false`, the record is soft deleted but the file remains until purged or removed manually
-
-Example `.env` overrides:
+Environment overrides:
 
 ```dotenv
 ATLAS_ASSETS_DISK=s3
@@ -43,7 +37,7 @@ ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=false
 ```
 
 ## Publish Migrations
-Atlas Assets requires an `assets` table (or custom table name defined in config).
+Publish the migrations for the `atlas_assets` table (or your configured table name):
 
 ```bash
 php artisan vendor:publish --tag=atlas-assets-migrations
@@ -55,7 +49,7 @@ php artisan migrate
 ```
 
 ## Usage Entry Point
-Basic asset upload:
+Upload a file:
 
 ```php
 use Atlas\Assets\Facades\Assets;
@@ -69,7 +63,7 @@ Upload with model association:
 $asset = Assets::uploadForModel($post, $request->file('image'));
 ```
 
-Temporary URL:
+Generate a temporary URL:
 
 ```php
 $url = Assets::temporaryUrl($asset);
