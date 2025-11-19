@@ -7,12 +7,12 @@
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0",
         "illuminate/filesystem": "^10.0|^11.0",
-        "atlas-php/core": "^0.2.0"
+        "atlas-php/core": "^0.3.0"
     },
     "require-dev": {
         "laravel/pint": "^1.15",
         "mockery/mockery": "^1.6",
-        "nunomaduro/larastan": "^2.9",
+        "larastan/larastan": "^3.0",
         "orchestra/testbench": "^8.24|^9.0",
         "phpunit/phpunit": "^10.5"
     },

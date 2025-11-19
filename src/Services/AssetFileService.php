@@ -105,7 +105,7 @@ class AssetFileService
         return $this->diskResolver->resolve();
     }
 
-    private function supportsTemporaryUrls(Filesystem $disk): bool
+    private function supportsTemporaryUrls(object $disk): bool
     {
         return method_exists($disk, 'temporaryUrl');
     }

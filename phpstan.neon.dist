@@ -1,5 +1,5 @@
 includes:
-    - vendor/nunomaduro/larastan/extension.neon
+    - vendor/larastan/larastan/extension.neon
 
 parameters:
     paths:
@@ -7,3 +7,5 @@ parameters:
     level: 6
     parallel:
         maximumNumberOfProcesses: 1
+    ignoreErrors:
+        - '~Parameter #\d+ \$.*AssetModelService::__construct\(\) is not optional~'

@@ -116,17 +116,13 @@ class PathResolver
 
     private function fileName(UploadedFile $file): string
     {
-        $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $name = (string) pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 
-        if (! is_string($name) || $name === '') {
-            $name = pathinfo($file->getFilename(), PATHINFO_FILENAME);
+        if ($name === '') {
+            $name = (string) pathinfo($file->getFilename(), PATHINFO_FILENAME);
         }
 
-        if (! is_string($name) || $name === '') {
-            return '';
-        }
-
-        return Str::slug($name, '_');
+        return $name === '' ? '' : Str::slug($name, '_');
     }
 
     private function extension(UploadedFile $file): string
