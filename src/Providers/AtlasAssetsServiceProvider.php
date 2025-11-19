@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Providers;
 
+use Atlas\Assets\AssetManager;
 use Atlas\Assets\Services\AssetFileService;
-use Atlas\Assets\Services\AssetManager;
 use Atlas\Assets\Services\AssetModelService;
 use Atlas\Assets\Services\AssetPurgeService;
 use Atlas\Assets\Support\ConfigValidator;

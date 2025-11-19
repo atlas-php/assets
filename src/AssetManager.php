@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Atlas\Assets\Services;
+namespace Atlas\Assets;
 
 use Atlas\Assets\Models\Asset;
+use Atlas\Assets\Services\AssetFileService;
+use Atlas\Assets\Services\AssetModelService;
+use Atlas\Assets\Services\AssetPurgeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;

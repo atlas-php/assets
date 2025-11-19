@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Facades;
 
-use Atlas\Assets\Services\AssetManager;
+use Atlas\Assets\AssetManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Facade;
 
