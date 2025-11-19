@@ -30,7 +30,8 @@ class AssetService
         private readonly PathResolver $pathResolver,
         private readonly Repository $config,
         private readonly UploadGuardService $uploadGuard,
-        private readonly SortOrderResolver $sortOrderResolver
+        private readonly SortOrderResolver $sortOrderResolver,
+        private readonly AssetModelService $records
     ) {}
 
     /**
@@ -176,7 +177,7 @@ class AssetService
             $data['sort_order'] = $sortOrder;
         }
 
-        $asset = Asset::query()->create($data);
+        $asset = $this->records->create($data);
 
         return $asset->refresh();
     }

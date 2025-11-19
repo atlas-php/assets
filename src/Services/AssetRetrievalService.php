@@ -23,12 +23,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AssetRetrievalService
 {
     public function __construct(
-        private readonly DiskResolver $diskResolver
+        private readonly DiskResolver $diskResolver,
+        private readonly AssetModelService $records
     ) {}
 
     public function find(int|string $id): ?Asset
     {
-        return Asset::query()->find($id);
+        return $this->records->find($id);
     }
 
     /**
@@ -145,7 +146,7 @@ class AssetRetrievalService
     public function buildModelQuery(Model $model, array $filters = []): Builder
     {
         return $this->applyFilters(
-            Asset::query()
+            $this->records->query()
                 ->where('model_type', $model->getMorphClass())
                 ->where('model_id', $model->getKey()),
             $filters
@@ -159,7 +160,7 @@ class AssetRetrievalService
     public function buildUserQuery(int|string $userId, array $filters = []): Builder
     {
         return $this->applyFilters(
-            Asset::query()->where('user_id', $userId),
+            $this->records->query()->where('user_id', $userId),
             $filters
         );
     }
