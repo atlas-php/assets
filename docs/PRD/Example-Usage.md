@@ -288,7 +288,7 @@ $count = Assets::purge();
 ```
 
 ## Also See
-- [PRD Overview](./Atlas-Assets.md)
+- [Overview](./Atlas-Assets.md)
 - [Full API Reference](../Full-API.md)
 - [Installation Guide](../Install.md)
 - [README](../../README.md)

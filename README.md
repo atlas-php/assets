@@ -208,7 +208,7 @@ Reset to pattern behavior:
 ```
 
 ## Also See
-- [PRD Overview](./docs/PRD/Atlas-Assets.md)
+- [Overview](./docs/PRD/Atlas-Assets.md)
 - [Example Usage](./docs/PRD/Example-Usage.md)
 - [Full API Reference](./docs/Full-API.md)
 - [Install Guide](./docs/Install.md)

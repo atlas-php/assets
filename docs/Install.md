@@ -70,7 +70,7 @@ $url = Assets::temporaryUrl($asset);
 ```
 
 ## Also See
-- [PRD Overview](./PRD/Atlas-Assets.md)
+- [Overview](./PRD/Atlas-Assets.md)
 - [Example Usage](./PRD/Example-Usage.md)
 - [Full API Reference](./Full-API.md)
 - [README](../README.md)
