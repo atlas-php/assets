@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Atlas\Assets\Http\Controllers;
 
 use Atlas\Assets\Models\Asset;
-use Atlas\Assets\Services\AssetRetrievalService;
+use Atlas\Assets\Services\AssetFileService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -18,11 +18,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AssetStreamController
 {
     public function __construct(
-        private readonly AssetRetrievalService $retrievalService
+        private readonly AssetFileService $assetFileService
     ) {}
 
     public function __invoke(Asset $asset): StreamedResponse
     {
-        return $this->retrievalService->stream($asset);
+        return $this->assetFileService->stream($asset);
     }
 }

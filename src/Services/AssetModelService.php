@@ -7,6 +7,7 @@ namespace Atlas\Assets\Services;
 use Atlas\Assets\Models\Asset;
 use Atlas\Core\Services\ModelService;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -27,6 +28,64 @@ class AssetModelService extends ModelService
         private readonly AssetFileService $assetFileService,
         private readonly Repository $config,
     ) {}
+
+    /**
+     * Fluent alias for retrieving assets associated with a model.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    public function forModel(Model $model, array $filters = [], ?int $limit = null): Builder
+    {
+        return $this->applyLimit(
+            $this->buildModelQuery($model, $filters),
+            $limit
+        );
+    }
+
+    /**
+     * Fluent alias for retrieving assets associated with a user.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
+    {
+        return $this->applyLimit(
+            $this->buildUserQuery($userId, $filters),
+            $limit
+        );
+    }
+
+    /**
+     * Build a model-scoped query with optional filters.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    public function buildModelQuery(Model $model, array $filters = []): Builder
+    {
+        return $this->applyFilters(
+            $this->query()
+                ->where('model_type', $model->getMorphClass())
+                ->where('model_id', $model->getKey()),
+            $filters
+        );
+    }
+
+    /**
+     * Build a user-scoped query with optional filters.
+     *
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    public function buildUserQuery(int|string $userId, array $filters = []): Builder
+    {
+        return $this->applyFilters(
+            $this->query()->where('user_id', $userId),
+            $filters
+        );
+    }
 
     public function delete(Model $model, bool $force = false): bool
     {
@@ -63,6 +122,37 @@ class AssetModelService extends ModelService
         $this->assetFileService->delete($asset->file_path);
 
         return parent::delete($asset, true);
+    }
+
+    /**
+     * @param  Builder<Asset>  $builder
+     * @param  array{label?: string|null, category?: string|null}  $filters
+     * @return Builder<Asset>
+     */
+    private function applyFilters(Builder $builder, array $filters): Builder
+    {
+        if (array_key_exists('label', $filters) && $filters['label'] !== null) {
+            $builder->where('label', $filters['label']);
+        }
+
+        if (array_key_exists('category', $filters) && $filters['category'] !== null) {
+            $builder->where('category', $filters['category']);
+        }
+
+        return $builder->orderByDesc('id');
+    }
+
+    /**
+     * @param  Builder<Asset>  $builder
+     * @return Builder<Asset>
+     */
+    private function applyLimit(Builder $builder, ?int $limit): Builder
+    {
+        if ($limit !== null) {
+            $builder->limit($limit);
+        }
+
+        return $builder;
     }
 
     private function shouldDeleteFilesOnSoftDelete(): bool

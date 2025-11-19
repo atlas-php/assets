@@ -14,16 +14,16 @@ Static facade backed by the service container.
 | `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                        | Proxy to `AssetService::uploadForModel`. Stores an asset bound to a model.                                                       |
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset`  | Proxy to `AssetService::update`. Updates metadata and optionally replaces the stored file and/or model association.              |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`         | Proxy to `AssetService::replace`. Convenience wrapper around `update()` with a new file.                                         |
-| `find(int|string $id): ?Asset`                                                                           | Proxy to `AssetRetrievalService::find`. Fetches an asset by primary key.                                                         |
-| `forModel(Model $model, array $filters = [], ?int $limit = null): Builder`                               | Fluent alias for `listForModel()`. Returns a builder scoped to a model with optional filters and limit.                          |
-| `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                          | Fluent alias for `listForUser()`. Returns a builder scoped to a user id with optional filters and limit.                         |
-| `listForModel(Model $model, array $filters = [], ?int $limit = null): Builder`                           | Proxy to `AssetRetrievalService::listForModel`. Lets consumers choose `get()`, `paginate()`, `cursorPaginate()`, etc.           |
-| `listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                      | Proxy to `AssetRetrievalService::listForUser`. Returns a user-scoped builder for further constraints.                            |
-| `download(Asset $asset): string`                                                                         | Proxy to `AssetRetrievalService::download`. Reads file contents from storage.                                                    |
-| `exists(Asset $asset): bool`                                                                             | Proxy to `AssetRetrievalService::exists`. Checks if the file exists on the configured disk.                                      |
-| `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Proxy to `AssetRetrievalService::temporaryUrl`. Returns a temporary URL or signed route URL.                                     |
+| `find(int|string $id): ?Asset`                                                                           | Proxy to `AssetModelService::find`. Fetches an asset by primary key.                                                             |
+| `forModel(Model $model, array $filters = [], ?int $limit = null): Builder`                               | Proxy to `AssetModelService::forModel`. Returns a builder scoped to a model with optional filters and limit.                     |
+| `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                          | Proxy to `AssetModelService::forUser`. Returns a builder scoped to a user id with optional filters and limit.                    |
+| `listForModel(Model $model, array $filters = [], ?int $limit = null): Builder`                           | Alias of `AssetModelService::forModel`. Lets consumers choose `get()`, `paginate()`, `cursorPaginate()`, etc.                   |
+| `listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                      | Alias of `AssetModelService::forUser`. Returns a user-scoped builder for further constraints.                                    |
+| `download(Asset $asset): string`                                                                         | Proxy to `AssetFileService::download`. Reads file contents from storage.                                                         |
+| `exists(Asset $asset): bool`                                                                             | Proxy to `AssetFileService::exists`. Checks if the file exists on the configured disk.                                           |
+| `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Proxy to `AssetFileService::temporaryUrl`. Returns a temporary URL or signed route URL.                                          |
 | `delete(Asset $asset, bool $forceDelete = false): void`                                                  | Proxy to `AssetModelService::delete`. Soft deletes by default; pass `true` to force delete immediately and remove the file.    |
-| `purge(): int`                                                                                           | Proxy to `AssetPurgeService::purge` → `AssetModelService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
+| `purge(): int`                                                                                           | Proxy to `AssetPurgeService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
 
 ## Services
 
@@ -38,23 +38,6 @@ Handles uploads, replacements, and metadata updates.
 | `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file and/or re-associates the asset to a new model. Maintains `original_file_name`, updates `file_mime_type`, `file_ext`, `file_path`, and can recalculate or respect explicit `sort_order`. |
 | `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience wrapper around `update()` that always includes a new file. When paths change, displaced files are removed according to configuration.                                                                                               |
 
-### `Atlas\Assets\Services\AssetRetrievalService`
-
-Provides read operations and download helpers.
-
-| Method                                                        | Description                                                                                                                                                      |
-|---------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `find(int|string $id): ?Asset`                                | Fetches an asset by primary key or returns `null` when missing.                                                                                                  |
-| `forModel(Model $model, array $filters = [], ?int $limit = null): Builder` | Fluent alias for `listForModel()`. Returns an `Eloquent\Builder` scoped to the given model with optional filters and a max result limit.                       |
-| `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder` | Fluent alias for `listForUser()`. Returns a builder scoped to a user id with optional filters and a max result limit.                                           |
-| `listForModel(Model $model, array $filters = [], ?int $limit = null): Builder` | Returns a builder constrained to the given model. Callers decide whether to `get()`, `paginate()`, or `cursorPaginate()`.                                       |
-| `listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder` | Returns a builder constrained to a user id.                                                                                                                      |
-| `buildModelQuery(Model $model, array $filters = []): Builder` | Exposes the base model-scoped query used by retrieval helpers, useful when building more complex conditions.                                                    |
-| `buildUserQuery(int|string $userId, array $filters = []): Builder` | Exposes the base user-scoped query.                                                                                                                              |
-| `download(Asset $asset): string`                              | Reads the asset file from storage and returns its contents. Throws when the underlying file is missing.                                                         |
-| `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL using the disk’s native support when available, or falls back to a signed route that streams the file.                                |
-| `exists(Asset $asset): bool`                                  | Returns `true` when the underlying file exists, `false` otherwise.                                                                                               |
-
 ### `Atlas\Assets\Services\AssetPurgeService`
 
 Provides a purge-specific entry point that delegates to `AssetModelService` so the API surface stays stable while deletion logic lives in the model service.
@@ -65,23 +48,30 @@ Provides a purge-specific entry point that delegates to `AssetModelService` so t
 
 ### `Atlas\Assets\Services\AssetModelService`
 
-Shared CRUD layer for the `Asset` model that now also orchestrates file cleanup for delete flows. Use this service whenever you need
-direct data access without bypassing the shared behaviors used throughout the package.
+Shared CRUD layer for the `Asset` model that now also orchestrates file cleanup for delete flows and exposes scoped query builders for reads.
 
 | Method/Property                            | Description                                                                                                                                                |
 |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `query(): Builder<Asset>`                  | Returns a builder for raw queries.                                                                                                                         |
 | `create(array $data): Asset`               | Creates a record with the provided attributes.                                                                                                             |
+| `forModel(Model $model, array $filters = [], ?int $limit = null): Builder` | Returns a builder scoped to the supplied model, ready for `get()`, `paginate()`, or `cursorPaginate()`.                                                    |
+| `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder` | Returns a builder scoped to a user identifier with optional filters.                                                                                       |
+| `buildModelQuery(Model $model, array $filters = []): Builder` | Lower-level helper for custom constraints when building model-scoped queries.                                                                              |
+| `buildUserQuery(int|string $userId, array $filters = []): Builder` | Lower-level helper for custom constraints when building user-scoped queries.                                                                               |
 | `delete(Asset $asset, bool $force = false): bool` | Deletes the record through soft deletes by default, removing files when configured, or force deletes + removes files immediately when `$force` is `true`. |
 
 ### `Atlas\Assets\Services\AssetFileService`
 
-Low-level helper responsible for disk resolution and file deletion so higher level services remain storage-agnostic.
+Low-level helper responsible for disk resolution, downloads, temporary URLs, and streaming so higher level services remain storage-agnostic.
 
-| Method/Property              | Description                                              |
-|------------------------------|----------------------------------------------------------|
-| `delete(?string $path): void`| Removes the file from the configured disk when it exists.|
-| `disk(): Filesystem`         | Returns the resolved disk instance for advanced use.     |
+| Method/Property              | Description                                                                                 |
+|------------------------------|---------------------------------------------------------------------------------------------|
+| `download(Asset $asset): string` | Reads the file contents from the configured disk.                                        |
+| `exists(Asset $asset): bool`     | Checks if the file exists on disk.                                                       |
+| `temporaryUrl(Asset $asset, int $minutes = 5): string` | Returns a disk-issued temporary URL or a signed streaming route fallback. |
+| `stream(Asset $asset): StreamedResponse` | Streams the asset via the signed fallback route when necessary.                       |
+| `delete(?string $path): void`    | Removes the file from the configured disk when it exists.                               |
+| `disk(): Filesystem`             | Returns the resolved disk instance for advanced use.                                     |
 
 ## Support Utilities
 

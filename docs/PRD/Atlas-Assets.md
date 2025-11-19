@@ -173,15 +173,17 @@ Supports per‑call overrides for:
 - size limits
 - custom sort order
 
-### AssetRetrievalService
-Handles reads:
+### AssetModelService (Read helpers)
+Handles reads and scoped builders:
 - `find()`
 - `forModel()`, `forUser()`
-- `listForModel()`, `listForUser()`
+- `buildModelQuery()`, `buildUserQuery()` for advanced customization
+
+### AssetFileService
+Handles disk-centric operations:
 - `download()`, `exists()`
 - `temporaryUrl()`
-
-Also exposes base query builders for advanced consumers.
+- `stream()` used by the fallback route when disks cannot generate temporary URLs
 
 ### AssetPurgeService
 Handles purge flows while `AssetModelService` owns deletion:

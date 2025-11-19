@@ -41,7 +41,7 @@ final class AssetsFacadeTest extends TestCase
         self::assertTrue(Assets::exists($asset));
         self::assertNotNull(Assets::find($asset->id));
 
-        $query = Assets::listForUser(7);
+        $query = Assets::forUser(7);
         self::assertInstanceOf(Builder::class, $query);
         $collection = $query->get();
         self::assertCount(1, $collection);

@@ -22,8 +22,6 @@ use Illuminate\Support\Facades\Facade;
  * @method static ?\Atlas\Assets\Models\Asset find(int|string $id)
  * @method static Builder forModel(\Illuminate\Database\Eloquent\Model $model, array $filters = [], ?int $limit = null)
  * @method static Builder forUser(int|string $userId, array $filters = [], ?int $limit = null)
- * @method static Builder listForModel(\Illuminate\Database\Eloquent\Model $model, array $filters = [], ?int $limit = null)
- * @method static Builder listForUser(int|string $userId, array $filters = [], ?int $limit = null)
  * @method static string download(\Atlas\Assets\Models\Asset $asset)
  * @method static bool exists(\Atlas\Assets\Models\Asset $asset)
  * @method static string temporaryUrl(\Atlas\Assets\Models\Asset $asset, int $minutes = 5)

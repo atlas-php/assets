@@ -8,6 +8,9 @@ use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Services\AssetModelService;
 use Atlas\Assets\Services\AssetPurgeService;
 use Atlas\Assets\Tests\TestCase;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +31,127 @@ final class AssetModelServiceTest extends TestCase
 
         Storage::fake('s3');
         config()->set('atlas-assets.disk', 's3');
+    }
+
+    public function test_find_returns_asset(): void
+    {
+        $asset = Asset::factory()->create(['file_path' => 'path.doc']);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        self::assertSame($asset->id, $service->find($asset->id)?->id);
+    }
+
+    public function test_for_model_applies_filters(): void
+    {
+        $model = new RetrievalModel;
+        $model->forceFill(['id' => 10]);
+
+        $matching = Asset::factory()->create([
+            'model_type' => $model->getMorphClass(),
+            'model_id' => 10,
+            'label' => 'hero',
+        ]);
+
+        Asset::factory()->create([
+            'model_type' => $model->getMorphClass(),
+            'model_id' => 10,
+            'label' => 'thumb',
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $builder = $service->forModel($model, ['label' => 'hero']);
+        self::assertInstanceOf(Builder::class, $builder);
+        $results = $builder->get();
+
+        self::assertCount(1, $results);
+        self::assertTrue($results->first()->is($matching));
+    }
+
+    public function test_for_model_supports_limit(): void
+    {
+        $model = new RetrievalModel;
+        $model->forceFill(['id' => 22]);
+
+        $oldest = Asset::factory()->create([
+            'model_type' => $model->getMorphClass(),
+            'model_id' => 22,
+        ]);
+
+        Asset::factory()->count(3)->create([
+            'model_type' => $model->getMorphClass(),
+            'model_id' => 22,
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $builder = $service->forModel($model, [], 2);
+        $results = $builder->get();
+
+        self::assertCount(2, $results);
+        self::assertFalse($results->contains($oldest));
+    }
+
+    public function test_for_user_filters_by_category(): void
+    {
+        $userId = 55;
+
+        $matching = Asset::factory()->create([
+            'user_id' => $userId,
+            'category' => 'docs',
+        ]);
+
+        Asset::factory()->create([
+            'user_id' => $userId,
+            'category' => 'images',
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $builder = $service->forUser($userId, ['category' => 'docs']);
+        self::assertInstanceOf(Builder::class, $builder);
+        $results = $builder->get();
+
+        self::assertCount(1, $results);
+        self::assertTrue($results->first()->is($matching));
+    }
+
+    public function test_for_model_builder_paginates(): void
+    {
+        $model = new RetrievalModel;
+        $model->forceFill(['id' => 91]);
+
+        $assets = Asset::factory()->count(3)->create([
+            'model_type' => $model->getMorphClass(),
+            'model_id' => 91,
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $paginator = $service->forModel($model)->paginate(2, ['*'], 'page', 1);
+
+        self::assertInstanceOf(LengthAwarePaginator::class, $paginator);
+        self::assertCount(2, $paginator->items());
+        self::assertSame($assets->last()->id, $paginator->items()[0]->id);
+        self::assertSame($assets->get(1)->id, $paginator->items()[1]->id);
+    }
+
+    public function test_for_user_builder_cursor_paginates(): void
+    {
+        $userId = 315;
+
+        $assets = Asset::factory()->count(3)->create([
+            'user_id' => $userId,
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $paginator = $service->forUser($userId)->cursorPaginate(2);
+
+        self::assertInstanceOf(CursorPaginator::class, $paginator);
+        self::assertCount(2, $paginator->items());
+        self::assertSame($assets->last()->id, $paginator->items()[0]->id);
     }
 
     public function test_delete_removes_file_and_soft_deletes(): void
@@ -135,4 +259,17 @@ final class AssetModelServiceTest extends TestCase
             Storage::disk('s3')->assertMissing($asset->file_path);
         }
     }
+}
+
+/**
+ * @internal helper for retrieval tests
+ */
+class RetrievalModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'retrieval_models';
+
+    /**
+     * @var array<int, string>
+     */
+    protected $guarded = [];
 }
