@@ -1,4 +1,4 @@
-name: Tests
+name: Automated Tests
 
 on:
   push:
@@ -9,13 +9,9 @@ on:
 permissions:
   contents: read
 
-defaults:
-  run:
-    working-directory: ./assets
-
 jobs:
   tests:
-    name: Automated Tests (phpunit)
+    name: PHPUnit
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

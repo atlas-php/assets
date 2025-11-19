@@ -4,15 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8c436d7a4f928f7103469b294aaa3ff4",
+    "content-hash": "2e92e355560528062e197868e7f8f77d",
     "packages": [
         {
             "name": "atlas-php/core",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../core",
+            "version": "v0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/atlas-php/core.git",
                 "reference": "a597d2d0d5c6f6f2966e5aced66563edbf29c762"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/atlas-php/core/zipball/a597d2d0d5c6f6f2966e5aced66563edbf29c762",
+                "reference": "a597d2d0d5c6f6f2966e5aced66563edbf29c762",
+                "shasum": ""
             },
             "require": {
                 "illuminate/support": "^10.0 || ^11.0",
@@ -37,30 +43,16 @@
                     "Atlas\\Core\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Atlas\\Core\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "phpunit"
-                ],
-                "lint": [
-                    "vendor/bin/pint"
-                ],
-                "analyse": [
-                    "PHPSTAN_DISABLE_PARALLEL=1 vendor/bin/phpstan analyse"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "description": "Core utilities for Atlas PHP Laravel packages.",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/atlas-php/core/issues",
+                "source": "https://github.com/atlas-php/core/tree/v0.2.0"
+            },
+            "time": "2025-11-19T00:24:54+00:00"
         },
         {
             "name": "brick/math",
@@ -8838,9 +8830,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "atlas-php/core": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
