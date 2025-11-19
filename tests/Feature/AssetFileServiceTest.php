@@ -6,11 +6,17 @@ namespace Atlas\Assets\Tests\Feature;
 
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Services\AssetFileService;
+use Atlas\Assets\Support\DiskResolver;
 use Atlas\Assets\Tests\TestCase;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Mockery;
+use RuntimeException;
 
 /**
  * Class AssetFileServiceTest
@@ -139,5 +145,67 @@ final class AssetFileServiceTest extends TestCase
         $response->assertHeader('Content-Length', (string) $asset->file_size);
         $response->assertHeader('Cache-Control', 'max-age=300, private');
         self::assertSame('archive-content', $response->streamedContent());
+    }
+
+    public function test_store_uploaded_file_throws_when_stream_cannot_open(): void
+    {
+        $missingPath = sys_get_temp_dir().'/atlas-assets-missing-'.uniqid('', true);
+        $file = Mockery::mock(UploadedFile::class);
+        $file->shouldReceive('getRealPath')->andReturn($missingPath);
+
+        $service = $this->app->make(AssetFileService::class);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to open uploaded file stream.');
+
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $service->storeUploadedFile($file, 'files/test.txt', 'public');
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    public function test_delete_ignores_empty_paths(): void
+    {
+        $disk = Storage::disk('s3');
+        $disk->put('files/delete-me.txt', 'content');
+
+        $service = $this->app->make(AssetFileService::class);
+
+        $service->delete('   ');
+
+        $disk->assertExists('files/delete-me.txt');
+    }
+
+    public function test_stream_throws_when_disk_stream_is_unreadable(): void
+    {
+        $asset = Asset::factory()->create([
+            'file_path' => 'files/broken.bin',
+            'file_mime_type' => 'application/octet-stream',
+            'file_size' => 10,
+        ]);
+
+        $disk = Mockery::mock(Filesystem::class);
+        $disk->shouldReceive('exists')
+            ->once()
+            ->with('files/broken.bin')
+            ->andReturn(true);
+        $disk->shouldReceive('readStream')
+            ->once()
+            ->with('files/broken.bin')
+            ->andReturn(false);
+
+        $diskResolver = Mockery::mock(DiskResolver::class);
+        $diskResolver->shouldReceive('resolve')
+            ->andReturn($disk);
+
+        $service = new AssetFileService($diskResolver, $this->app->make(ConfigRepository::class));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('could not be read from disk');
+
+        $service->stream($asset);
     }
 }

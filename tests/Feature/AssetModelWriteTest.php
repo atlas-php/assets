@@ -282,6 +282,86 @@ final class AssetModelWriteTest extends TestCase
         self::assertSame(42, $asset->type);
     }
 
+    public function test_type_accepts_stringable_values(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $value = new class implements \Stringable
+        {
+            public function __toString(): string
+            {
+                return '77';
+            }
+        };
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('stringable.pdf', 5),
+            ['type' => $value]
+        );
+
+        self::assertSame(77, $asset->type);
+    }
+
+    public function test_type_trims_blank_strings_to_null(): void
+    {
+        $asset = Asset::factory()->create(['type' => 5]);
+
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, ['type' => '    ']);
+
+        $asset->refresh();
+
+        self::assertNull($asset->type);
+    }
+
+    public function test_type_rejects_non_numeric_strings(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->upload(
+            UploadedFile::fake()->create('invalid.pdf', 5),
+            ['type' => 'hero']
+        );
+    }
+
+    public function test_type_casts_float_values_to_int(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('float.pdf', 5),
+            ['type' => 12.8]
+        );
+
+        self::assertSame(12, $asset->type);
+    }
+
+    public function test_type_rejects_non_integer_inputs(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->upload(
+            UploadedFile::fake()->create('array.pdf', 5),
+            ['type' => ['invalid']]
+        );
+    }
+
+    public function test_type_rejects_out_of_range_values(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->upload(
+            UploadedFile::fake()->create('large.pdf', 5),
+            ['type' => 300]
+        );
+    }
+
     public function test_update_can_change_sort_order_manually(): void
     {
         $asset = Asset::factory()->create(['sort_order' => 0]);
@@ -292,6 +372,67 @@ final class AssetModelWriteTest extends TestCase
         $asset->refresh();
 
         self::assertSame(42, $asset->sort_order);
+    }
+
+    public function test_update_sets_sort_order_to_zero_when_null_passed(): void
+    {
+        $asset = Asset::factory()->create(['sort_order' => 5]);
+
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, ['sort_order' => null]);
+
+        $asset->refresh();
+
+        self::assertSame(0, $asset->sort_order);
+    }
+
+    public function test_update_returns_same_instance_when_no_changes_detected(): void
+    {
+        $asset = Asset::factory()->create();
+
+        $service = $this->app->make(AssetModelService::class);
+
+        $result = $service->updateAsset($asset, []);
+
+        self::assertSame($asset, $result);
+    }
+
+    public function test_upload_records_zero_size_when_file_reports_non_integer(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'asset-file');
+        self::assertIsString($tempFile);
+        file_put_contents($tempFile, 'contents');
+
+        $file = Mockery::mock(UploadedFile::class);
+        $file->shouldReceive('getRealPath')->andReturn($tempFile);
+        $file->shouldReceive('getClientMimeType')->andReturn('text/plain');
+        $file->shouldReceive('getMimeType')->andReturn('text/plain');
+        $file->shouldReceive('getClientOriginalExtension')->andReturn('txt');
+        $file->shouldReceive('extension')->andReturn('txt');
+        $file->shouldReceive('getClientOriginalName')->andReturn('size.txt');
+        $file->shouldReceive('getFilename')->andReturn('size.txt');
+        $file->shouldReceive('getSize')->andReturn(false);
+
+        $service = $this->app->make(AssetModelService::class);
+        $asset = $service->upload($file);
+
+        self::assertSame(0, $asset->file_size);
+
+        @unlink($tempFile);
+    }
+
+    public function test_blank_label_updates_are_normalized_to_null(): void
+    {
+        $asset = Asset::factory()->create([
+            'label' => 'hero',
+        ]);
+
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, ['label' => '    ']);
+
+        $asset->refresh();
+
+        self::assertNull($asset->label);
     }
 
     public function test_update_accepts_group_id_changes_independently(): void
