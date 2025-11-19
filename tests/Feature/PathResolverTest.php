@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
+use Mockery;
 
 /**
  * Class PathResolverTest
@@ -128,6 +129,98 @@ final class PathResolverTest extends TestCase
 
         self::assertSame('products/hero.png', $productPath);
         self::assertSame('forms/signature.png', $formPath);
+    }
+
+    public function test_original_name_placeholder_uses_uploaded_filename_when_client_name_missing(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+        config()->set('atlas-assets.path.pattern', 'archives/{original_name}');
+
+        $file = $this->uploadedFileWithStoredName('Project Backup 2024.tar', '');
+
+        try {
+            $resolver = $this->app->make(PathResolver::class);
+
+            self::assertSame('archives/project_backup_2024', $resolver->resolve($file));
+        } finally {
+            $this->deleteUploadedFile($file);
+        }
+    }
+
+    public function test_file_name_placeholder_uses_uploaded_filename_when_client_name_missing(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+        config()->set('atlas-assets.path.pattern', 'archives/{file_name}');
+
+        $file = $this->uploadedFileWithStoredName('Blueprint Final 01.dwg', '');
+
+        try {
+            $resolver = $this->app->make(PathResolver::class);
+
+            self::assertSame('archives/blueprint_final_01', $resolver->resolve($file));
+        } finally {
+            $this->deleteUploadedFile($file);
+        }
+    }
+
+    public function test_file_name_placeholder_returns_empty_string_when_all_sources_missing(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+        config()->set('atlas-assets.path.pattern', 'uploads/{file_name}.{extension}');
+
+        $file = Mockery::mock(UploadedFile::class);
+        $file->allows([
+            'getClientOriginalName' => '',
+            'getFilename' => '',
+            'getClientOriginalExtension' => '',
+            'extension' => '',
+        ]);
+
+        $resolver = $this->app->make(PathResolver::class);
+
+        self::assertSame('uploads/.bin', $resolver->resolve($file));
+    }
+
+    public function test_date_placeholder_defaults_when_format_missing(): void
+    {
+        config()->set('atlas-assets.path.resolver', null);
+        config()->set('atlas-assets.path.pattern', 'snapshots/{date:}.{extension}');
+
+        Carbon::setTestNow(Carbon::create(2024, 5, 1, 9, 30, 15));
+
+        try {
+            $file = UploadedFile::fake()->create('Example.zip');
+
+            $resolver = $this->app->make(PathResolver::class);
+
+            self::assertSame('snapshots/20240501093015.zip', $resolver->resolve($file));
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    private function uploadedFileWithStoredName(string $storedFileName, string $originalName = ''): UploadedFile
+    {
+        $directory = sys_get_temp_dir().'/atlas-assets-tests';
+
+        if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
+            self::fail('Unable to create temporary upload directory.');
+        }
+
+        $path = $directory.'/'.$storedFileName;
+
+        file_put_contents($path, 'test-content');
+
+        return new UploadedFile($path, $originalName, null, null, true);
+    }
+
+    private function deleteUploadedFile(UploadedFile $file): void
+    {
+        $path = $file->getPathname();
+
+        if (is_string($path) && file_exists($path)) {
+            @unlink($path);
+        }
     }
 }
 
