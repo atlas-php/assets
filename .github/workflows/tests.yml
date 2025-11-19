@@ -9,9 +9,13 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: ./assets
+
 jobs:
   tests:
-    name: PHPUnit
+    name: Automated Tests (phpunit)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
