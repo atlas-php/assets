@@ -138,6 +138,16 @@ Oversized uploads throw:
 
 - `Atlas\Assets\Exceptions\UploadSizeLimitException`.
 
+## Configuration Reference
+
+- `atlas-assets.disk`: follows `ATLAS_ASSETS_DISK` first, then `FILESYSTEM_DISK`/`filesystems.default`, keeping storage driver selection aligned with the host app.
+- `atlas-assets.routes.stream`:
+    - `enabled`: toggle the built-in signed stream route (`ATLAS_ASSETS_STREAM_ROUTE_ENABLED=true|false`).
+    - `uri`: URI pattern for the stream route. Supply it with or without a leading slash (env: `ATLAS_ASSETS_STREAM_ROUTE_URI`).
+    - `name`: route name used for signed URLs, also referenced by `AssetFileService` (env: `ATLAS_ASSETS_STREAM_ROUTE_NAME`).
+    - `middleware`: array of middleware applied to the streaming route (`signed` and `SubstituteBindings` by default).
+- Other configuration options remain unchanged (path resolver, upload guards, sorting, etc.).
+
 ## Sort Ordering
 
 Sort order behavior is controlled via `atlas-assets.sort`:

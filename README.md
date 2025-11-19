@@ -30,6 +30,8 @@ php artisan vendor:publish --tag=atlas-assets-config
 php artisan vendor:publish --tag=atlas-assets-migrations
 ```
 
+Atlas Assets automatically follows your application's default filesystem disk (via `FILESYSTEM_DISK`/`filesystems.default`), so it works with local storage, S3, Spaces, or any driver Laravel supports. Override it per-environment using `ATLAS_ASSETS_DISK`.
+
 Full steps: [Install Guide](./docs/Install.md)
 
 ## Uploading Files
@@ -134,6 +136,29 @@ $url = Assets::temporaryUrl($asset, 10);
 ```php
 $content = Assets::download($asset);
 ```
+
+### Stream fallback route
+When your storage disk cannot generate temporary URLs, Assets falls back to a signed route named `atlas-assets.stream`. Customize or disable that route through `config/atlas-assets.php`:
+
+```php
+'routes' => [
+    'stream' => [
+        'enabled' => true,
+        'uri' => 'atlas-assets/stream/{asset}',
+        'name' => 'atlas-assets.stream',
+        'middleware' => ['signed', SubstituteBindings::class],
+    ],
+],
+```
+
+Environment overrides:
+```
+ATLAS_ASSETS_STREAM_ROUTE_ENABLED=true
+ATLAS_ASSETS_STREAM_ROUTE_URI=media/assets/{asset}
+ATLAS_ASSETS_STREAM_ROUTE_NAME=media.assets.stream
+```
+
+Disable the built-in route when you prefer to register your own streaming endpoint (be sure to keep the configured route name in sync so signed URLs resolve correctly).
 
 ## Managing Assets
 

@@ -196,11 +196,20 @@ Located in: `config/atlas-assets.php`
 - `sort.resolver` receives full metadata for custom ordering
 - Manual `sort_order` bypasses both
 
+### Route Rules
+- `routes.stream.enabled`: disable the bundled signed streaming route when the host app wants to register its own endpoint.
+- `routes.stream.uri`: customize the URI pattern (leading slash optional).
+- `routes.stream.name`: rename the route used for signed stream URLs so consumers can align with their naming conventions.
+- `routes.stream.middleware`: default `['signed', SubstituteBindings::class]`. Accepts any middleware array.
+
 ### Environment Variables
 ```
-ATLAS_ASSETS_DISK=
+ATLAS_ASSETS_DISK= # falls back to FILESYSTEM_DISK/filesystems.default
 ATLAS_ASSETS_VISIBILITY=
 ATLAS_ASSETS_DELETE_ON_SOFT_DELETE=
+ATLAS_ASSETS_STREAM_ROUTE_ENABLED=true
+ATLAS_ASSETS_STREAM_ROUTE_URI=atlas-assets/stream/{asset}
+ATLAS_ASSETS_STREAM_ROUTE_NAME=atlas-assets.stream
 ```
 
 ## Also See

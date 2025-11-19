@@ -10,6 +10,7 @@ use Atlas\Assets\Services\AssetModelService;
 use Atlas\Assets\Services\AssetPurgeService;
 use Atlas\Assets\Support\PathResolver;
 use Atlas\Assets\Support\SortOrderResolver;
+use Atlas\Assets\Support\StreamRouteRegistrar;
 use Atlas\Core\Providers\PackageServiceProvider;
 
 /**
@@ -37,6 +38,7 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
         $this->app->bind(AssetFileService::class);
         $this->app->singleton(AssetModelService::class, AssetModelService::class);
         $this->app->bind(AssetPurgeService::class);
+        $this->app->bind(StreamRouteRegistrar::class);
         $this->app->singleton(AssetManager::class);
     }
 

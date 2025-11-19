@@ -6,6 +6,7 @@ namespace Atlas\Assets\Services;
 
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Support\DiskResolver;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -21,7 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AssetFileService
 {
-    public function __construct(private readonly DiskResolver $diskResolver) {}
+    public function __construct(
+        private readonly DiskResolver $diskResolver,
+        private readonly Repository $config,
+    ) {}
 
     public function storeUploadedFile(UploadedFile $file, string $path, string $visibility): void
     {
@@ -108,8 +112,11 @@ class AssetFileService
 
     private function signedStreamUrl(Asset $asset, int $minutes): string
     {
+        $routeName = (string) $this->config->get('atlas-assets.routes.stream.name', 'atlas-assets.stream');
+        $routeName = $routeName === '' ? 'atlas-assets.stream' : $routeName;
+
         return URL::temporarySignedRoute(
-            'atlas-assets.stream',
+            $routeName,
             Carbon::now()->addMinutes($minutes),
             ['asset' => $asset->getKey()]
         );

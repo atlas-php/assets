@@ -23,7 +23,11 @@ class DiskResolver
 
     public function resolve(): Filesystem
     {
-        $disk = $this->config->get('atlas-assets.disk', 's3');
+        $disk = $this->config->get('atlas-assets.disk');
+
+        if (! is_string($disk) || trim($disk) === '') {
+            $disk = (string) $this->config->get('filesystems.default', 'public');
+        }
 
         return $this->filesystem->disk($disk);
     }

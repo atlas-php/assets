@@ -16,9 +16,16 @@ final class ConfigTest extends TestCase
 {
     public function test_exposes_default_configuration_values(): void
     {
-        self::assertSame('s3', config('atlas-assets.disk'));
+        self::assertSame('public', config('atlas-assets.disk'));
         self::assertSame('public', config('atlas-assets.visibility'));
         self::assertFalse((bool) config('atlas-assets.delete_files_on_soft_delete'));
+        self::assertTrue((bool) config('atlas-assets.routes.stream.enabled'));
+        self::assertSame('atlas-assets/stream/{asset}', config('atlas-assets.routes.stream.uri'));
+        self::assertSame('atlas-assets.stream', config('atlas-assets.routes.stream.name'));
+        self::assertSame(
+            ['signed', \Illuminate\Routing\Middleware\SubstituteBindings::class],
+            config('atlas-assets.routes.stream.middleware')
+        );
         self::assertSame(
             '{model_type}/{model_id}/{file_name}.{extension}',
             config('atlas-assets.path.pattern')
