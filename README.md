@@ -1,6 +1,9 @@
 # Atlas Assets
 
-**Atlas Assets** is a unified Laravel system for uploading, organizing, and retrieving files with a consistent API, predictable metadata, and configurable pathing. It removes scattered file‑handling logic and replaces it with a clean, reliable Assets service.
+[![Build](https://github.com/atlas-php/assets/actions/workflows/tests.yml/badge.svg)](https://github.com/atlas-php/assets/actions/workflows/tests.yml)
+[![License](https://img.shields.io/github/license/atlas-php/assets.svg)](LICENSE)
+
+**Atlas Assets** is a unified Laravel system for uploading, organizing, and retrieving files with a consistent API, predictable metadata, and configurable pathing. It removes scattered file-handling logic and replaces it with a clean, reliable Assets service.
 
 ## Table of Contents
 - [Overview](#overview)
