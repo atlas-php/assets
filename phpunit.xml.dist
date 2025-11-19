@@ -6,6 +6,11 @@
     colors="true"
     executionOrder="depends,defects"
 >
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+    </coverage>
     <testsuites>
         <testsuite name="Atlas Assets Test Suite">
             <directory suffix="Test.php">tests</directory>
