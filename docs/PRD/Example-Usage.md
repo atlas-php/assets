@@ -15,6 +15,7 @@ This document provides practical examples demonstrating how to use Atlas Assets 
 - [Reordering Assets](#reordering-assets)
 - [Renaming an Asset](#renaming-an-asset)
 - [Deleting Assets](#deleting-assets)
+- [CRUD Controller Example](#crud-controller-example)
 - [Using Custom Sort Resolver](#using-custom-sort-resolver)
 - [Using Custom Path Resolvers](#using-custom-path-resolvers)
 - [Purging Soft-Deleted Assets](#purging-soft-deleted-assets)
@@ -211,6 +212,77 @@ use Atlas\Assets\Facades\Assets;
 Assets::delete($asset);
 Assets::delete($asset, true); // force delete + remove file immediately
 ```
+
+## CRUD Controller Example
+The following resource-style controller demonstrates how consumers can layer Atlas Assets into their existing Laravel routes. The controller uses implicit route model binding for the parent model (`Post`) and the asset, mirrors the default `store`, `update`, and `destroy` signatures, and only replaces a stored file when a new upload is provided.
+
+```php
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\Post;
+use Atlas\Assets\Facades\Assets;
+use Atlas\Assets\Models\Asset;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Validation\Rule;
+
+class PostAssetController extends Controller
+{
+    public function store(Request $request, Post $post): JsonResource
+    {
+        $validated = $request->validate([
+            'file'      => ['required', 'file', 'max:10240'],
+            'label'     => ['nullable', 'string', 'max:255'],
+            'category'  => ['nullable', 'string', 'max:255'],
+            'type'      => ['nullable', 'integer', 'between:0,255'],
+            'sort_order'=> ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $asset = Assets::uploadForModel(
+            $post,
+            $validated['file'],
+            collect($validated)->except('file')->toArray()
+        );
+
+        return JsonResource::make($asset)->additional(['message' => 'Asset created.']);
+    }
+
+    public function update(Request $request, Post $post, Asset $asset): JsonResource
+    {
+        $validated = $request->validate([
+            'file'      => ['nullable', 'file', 'max:10240'],
+            'label'     => ['sometimes', 'nullable', 'string', 'max:255'],
+            'category'  => ['sometimes', 'nullable', 'string', 'max:255'],
+            'type'      => ['sometimes', 'nullable', Rule::in(range(0, 255))],
+            'sort_order'=> ['sometimes', 'nullable', 'integer', 'min:0'],
+        ]);
+
+        $attributes = collect($validated)->except('file')->toArray();
+
+        $asset = isset($validated['file'])
+            ? Assets::replace($asset, $validated['file'], $attributes, $post)
+            : Assets::update($asset, $attributes, null, $post);
+
+        return JsonResource::make($asset)->additional(['message' => 'Asset updated.']);
+    }
+
+    public function destroy(Post $post, Asset $asset): JsonResource
+    {
+        Assets::delete($asset, forceDelete: request()->boolean('force'));
+
+        return JsonResource::make(['message' => 'Asset deleted.']);
+    }
+}
+```
+
+Register the controller using Laravel's resource routes:
+
+```php
+Route::apiResource('posts.assets', PostAssetController::class)->shallow();
+```
+
+This provides `POST /posts/{post}/assets`, `PUT/PATCH /assets/{asset}`, and `DELETE /assets/{asset}` endpoints. Metadata-only updates skip file replacement, keeping uploads immutable unless a new file is submitted.
 
 ## Using Custom Sort Resolver
 Define a resolver in `config/atlas-assets.php` to control how `sort_order` is generated:
