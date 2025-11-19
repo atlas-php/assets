@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Providers;
 
-use Atlas\Assets\Services\AssetCleanupService;
+use Atlas\Assets\Services\AssetFileService;
 use Atlas\Assets\Services\AssetManager;
 use Atlas\Assets\Services\AssetModelService;
+use Atlas\Assets\Services\AssetPurgeService;
 use Atlas\Assets\Services\AssetRetrievalService;
 use Atlas\Assets\Services\AssetService;
 use Atlas\Assets\Support\ConfigValidator;
@@ -37,10 +38,11 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
         $this->app->bind(ConfigValidator::class, static fn () => new ConfigValidator);
         $this->app->bind(PathResolver::class);
         $this->app->bind(SortOrderResolver::class);
+        $this->app->bind(AssetFileService::class);
         $this->app->singleton(AssetModelService::class, AssetModelService::class);
         $this->app->bind(AssetService::class);
         $this->app->bind(AssetRetrievalService::class);
-        $this->app->bind(AssetCleanupService::class);
+        $this->app->bind(AssetPurgeService::class);
         $this->app->singleton(AssetManager::class);
     }
 

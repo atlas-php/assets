@@ -22,8 +22,8 @@ Static facade backed by the service container.
 | `download(Asset $asset): string`                                                                         | Proxy to `AssetRetrievalService::download`. Reads file contents from storage.                                                    |
 | `exists(Asset $asset): bool`                                                                             | Proxy to `AssetRetrievalService::exists`. Checks if the file exists on the configured disk.                                      |
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Proxy to `AssetRetrievalService::temporaryUrl`. Returns a temporary URL or signed route URL.                                     |
-| `delete(Asset $asset, bool $forceDelete = false): void`                                                  | Proxy to `AssetCleanupService::delete`. Soft deletes by default; pass `true` to force delete immediately and remove the file.    |
-| `purge(): int`                                                                                           | Proxy to `AssetCleanupService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
+| `delete(Asset $asset, bool $forceDelete = false): void`                                                  | Proxy to `AssetModelService::delete`. Soft deletes by default; pass `true` to force delete immediately and remove the file.    |
+| `purge(): int`                                                                                           | Proxy to `AssetPurgeService::purge` → `AssetModelService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
 
 ## Services
 
@@ -55,14 +55,33 @@ Provides read operations and download helpers.
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`        | Generates a temporary URL using the disk’s native support when available, or falls back to a signed route that streams the file.                                |
 | `exists(Asset $asset): bool`                                  | Returns `true` when the underlying file exists, `false` otherwise.                                                                                               |
 
-### `Atlas\Assets\Services\AssetCleanupService`
+### `Atlas\Assets\Services\AssetPurgeService`
 
-Manages deletions and purging of assets.
+Provides a purge-specific entry point that delegates to `AssetModelService` so the API surface stays stable while deletion logic lives in the model service.
 
-| Method                       | Description                                                                                          |
-|------------------------------|------------------------------------------------------------------------------------------------------|
-| `delete(Asset $asset, bool $forceDelete = false): void` | Soft deletes the asset (and files when configured) or force deletes immediately when `$forceDelete` is `true`. |
-| `purge(): int`               | Permanently deletes all soft-deleted assets and their files, returning the number of purged records. |
+| Method         | Description                                                                                                 |
+|----------------|-------------------------------------------------------------------------------------------------------------|
+| `purge(int $chunkSize = 100): int` | Permanently deletes all soft-deleted assets and their files (via the model service) and returns the purged count. |
+
+### `Atlas\Assets\Services\AssetModelService`
+
+Shared CRUD layer for the `Asset` model that now also orchestrates file cleanup for delete flows. Use this service whenever you need
+direct data access without bypassing the shared behaviors used throughout the package.
+
+| Method/Property                            | Description                                                                                                                                                |
+|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `query(): Builder<Asset>`                  | Returns a builder for raw queries.                                                                                                                         |
+| `create(array $data): Asset`               | Creates a record with the provided attributes.                                                                                                             |
+| `delete(Asset $asset, bool $force = false): bool` | Deletes the record through soft deletes by default, removing files when configured, or force deletes + removes files immediately when `$force` is `true`. |
+
+### `Atlas\Assets\Services\AssetFileService`
+
+Low-level helper responsible for disk resolution and file deletion so higher level services remain storage-agnostic.
+
+| Method/Property              | Description                                              |
+|------------------------------|----------------------------------------------------------|
+| `delete(?string $path): void`| Removes the file from the configured disk when it exists.|
+| `disk(): Filesystem`         | Returns the resolved disk instance for advanced use.     |
 
 ## Support Utilities
 

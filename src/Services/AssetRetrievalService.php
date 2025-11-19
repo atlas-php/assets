@@ -24,12 +24,12 @@ class AssetRetrievalService
 {
     public function __construct(
         private readonly DiskResolver $diskResolver,
-        private readonly AssetModelService $records
+        private readonly AssetModelService $assetModelService
     ) {}
 
     public function find(int|string $id): ?Asset
     {
-        return $this->records->find($id);
+        return $this->assetModelService->find($id);
     }
 
     /**
@@ -146,7 +146,7 @@ class AssetRetrievalService
     public function buildModelQuery(Model $model, array $filters = []): Builder
     {
         return $this->applyFilters(
-            $this->records->query()
+            $this->assetModelService->query()
                 ->where('model_type', $model->getMorphClass())
                 ->where('model_id', $model->getKey()),
             $filters
@@ -160,7 +160,7 @@ class AssetRetrievalService
     public function buildUserQuery(int|string $userId, array $filters = []): Builder
     {
         return $this->applyFilters(
-            $this->records->query()->where('user_id', $userId),
+            $this->assetModelService->query()->where('user_id', $userId),
             $filters
         );
     }

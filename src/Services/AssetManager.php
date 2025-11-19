@@ -20,8 +20,9 @@ class AssetManager
 {
     public function __construct(
         private readonly AssetService $assetService,
-        private readonly AssetRetrievalService $retrievalService,
-        private readonly AssetCleanupService $cleanupService,
+        private readonly AssetRetrievalService $assetRetrievalService,
+        private readonly AssetModelService $assetModelService,
+        private readonly AssetPurgeService $assetPurgeService,
     ) {}
 
     /**
@@ -62,7 +63,7 @@ class AssetManager
 
     public function find(int|string $id): ?Asset
     {
-        return $this->retrievalService->find($id);
+        return $this->assetRetrievalService->find($id);
     }
 
     /**
@@ -73,7 +74,7 @@ class AssetManager
      */
     public function forModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
-        return $this->retrievalService->forModel($model, $filters, $limit);
+        return $this->assetRetrievalService->forModel($model, $filters, $limit);
     }
 
     /**
@@ -84,7 +85,7 @@ class AssetManager
      */
     public function forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
-        return $this->retrievalService->forUser($userId, $filters, $limit);
+        return $this->assetRetrievalService->forUser($userId, $filters, $limit);
     }
 
     /**
@@ -93,7 +94,7 @@ class AssetManager
      */
     public function listForModel(Model $model, array $filters = [], ?int $limit = null): Builder
     {
-        return $this->retrievalService->listForModel($model, $filters, $limit);
+        return $this->assetRetrievalService->listForModel($model, $filters, $limit);
     }
 
     /**
@@ -102,31 +103,31 @@ class AssetManager
      */
     public function listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder
     {
-        return $this->retrievalService->listForUser($userId, $filters, $limit);
+        return $this->assetRetrievalService->listForUser($userId, $filters, $limit);
     }
 
     public function download(Asset $asset): string
     {
-        return $this->retrievalService->download($asset);
+        return $this->assetRetrievalService->download($asset);
     }
 
     public function exists(Asset $asset): bool
     {
-        return $this->retrievalService->exists($asset);
+        return $this->assetRetrievalService->exists($asset);
     }
 
     public function temporaryUrl(Asset $asset, int $minutes = 5): string
     {
-        return $this->retrievalService->temporaryUrl($asset, $minutes);
+        return $this->assetRetrievalService->temporaryUrl($asset, $minutes);
     }
 
     public function delete(Asset $asset, bool $forceDelete = false): void
     {
-        $this->cleanupService->delete($asset, $forceDelete);
+        $this->assetModelService->delete($asset, $forceDelete);
     }
 
     public function purge(): int
     {
-        return $this->cleanupService->purge();
+        return $this->assetPurgeService->purge();
     }
 }

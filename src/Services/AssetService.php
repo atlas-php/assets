@@ -31,7 +31,7 @@ class AssetService
         private readonly Repository $config,
         private readonly UploadGuardService $uploadGuard,
         private readonly SortOrderResolver $sortOrderResolver,
-        private readonly AssetModelService $records
+        private readonly AssetModelService $assetModelService
     ) {}
 
     /**
@@ -177,7 +177,7 @@ class AssetService
             $data['sort_order'] = $sortOrder;
         }
 
-        $asset = $this->records->create($data);
+        $asset = $this->assetModelService->create($data);
 
         return $asset->refresh();
     }
@@ -363,7 +363,8 @@ class AssetService
             return;
         }
 
-        $exists = Asset::withTrashed()
+        $exists = $this->assetModelService->query()
+            ->withTrashed()
             ->when($ignoreId, static fn ($query) => $query->where('id', '!=', $ignoreId))
             ->where('file_path', $path)
             ->exists();

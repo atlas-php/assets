@@ -183,10 +183,11 @@ Handles reads:
 
 Also exposes base query builders for advanced consumers.
 
-### AssetCleanupService
-Handles cleanup:
-- `delete(Asset $asset, bool $forceDelete = false)` — soft delete by default, or force delete + remove files immediately when `true`
+### AssetPurgeService
+Handles purge flows while `AssetModelService` owns deletion:
 - `purge()` — permanently delete soft-deleted records/files in batches
+
+> Implementation note: The `AssetModelService` extends the shared Atlas `ModelService` and overrides `delete()` so every consumer (including the facade) receives consistent file cleanup behavior while the new `AssetFileService` handles disk I/O. `AssetPurgeService` is the only class that chunks purges, delegating each force-delete to `AssetModelService::delete()` to avoid duplicate logic.
 
 ## Configuration
 Located in: `config/atlas-assets.php`

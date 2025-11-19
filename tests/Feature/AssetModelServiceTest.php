@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace Atlas\Assets\Tests\Feature;
 
 use Atlas\Assets\Models\Asset;
-use Atlas\Assets\Services\AssetCleanupService;
+use Atlas\Assets\Services\AssetModelService;
+use Atlas\Assets\Services\AssetPurgeService;
 use Atlas\Assets\Tests\TestCase;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Class AssetCleanupServiceTest
+ * Class AssetModelServiceTest
  *
- * Tests soft delete and purge operations for Atlas Assets.
+ * Tests the shared AssetModelService deletion flows and the dedicated AssetPurgeService to ensure consumers receive consistent behavior.
  * PRD Reference: Atlas Assets Overview — Removal & Purging.
  */
-final class AssetCleanupServiceTest extends TestCase
+final class AssetModelServiceTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -38,7 +40,7 @@ final class AssetCleanupServiceTest extends TestCase
 
         config()->set('atlas-assets.delete_files_on_soft_delete', true);
 
-        $service = $this->app->make(AssetCleanupService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $service->delete($asset);
 
@@ -56,7 +58,7 @@ final class AssetCleanupServiceTest extends TestCase
 
         config()->set('atlas-assets.delete_files_on_soft_delete', false);
 
-        $service = $this->app->make(AssetCleanupService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $service->delete($asset);
 
@@ -76,7 +78,7 @@ final class AssetCleanupServiceTest extends TestCase
 
         Storage::disk('shared-disk')->put('files/delete-from-shared.doc', 'content');
 
-        $service = $this->app->make(AssetCleanupService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $service->delete($asset);
 
@@ -92,16 +94,26 @@ final class AssetCleanupServiceTest extends TestCase
         Storage::disk('s3')->put('files/force.doc', 'content');
         config()->set('atlas-assets.delete_files_on_soft_delete', false);
 
-        $service = $this->app->make(AssetCleanupService::class);
+        $service = $this->app->make(AssetModelService::class);
         $service->delete($asset, true);
 
         Storage::disk('s3')->assertMissing('files/force.doc');
         self::assertDatabaseMissing('atlas_assets', ['id' => $asset->id]);
     }
 
-    public function test_purge_removes_soft_deleted_assets_and_files_in_chunks(): void
+    public function test_asset_model_service_rejects_non_asset_instance(): void
     {
-        $service = $this->app->make(AssetCleanupService::class);
+        $service = $this->app->make(AssetModelService::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $service->delete(new class extends EloquentModel {});
+    }
+
+    public function test_asset_purge_service_removes_soft_deleted_assets(): void
+    {
+        $purgeService = $this->app->make(AssetPurgeService::class);
+        $records = $this->app->make(AssetModelService::class);
 
         $assets = Asset::factory()->count(3)->sequence(
             ['file_path' => 'files/purge-1.doc'],
@@ -111,12 +123,12 @@ final class AssetCleanupServiceTest extends TestCase
 
         foreach ($assets as $asset) {
             Storage::disk('s3')->put($asset->file_path, 'content');
-            $service->delete($asset);
+            $records->delete($asset);
         }
 
-        $purged = $service->purge(chunkSize: 1);
+        $purged = $purgeService->purge(chunkSize: 1);
 
-        self::assertEquals(3, $purged);
+        self::assertSame(3, $purged);
         self::assertDatabaseCount('atlas_assets', 0);
 
         foreach ($assets as $asset) {
