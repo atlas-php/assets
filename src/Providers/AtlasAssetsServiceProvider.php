@@ -8,7 +8,6 @@ use Atlas\Assets\AssetManager;
 use Atlas\Assets\Services\AssetFileService;
 use Atlas\Assets\Services\AssetModelService;
 use Atlas\Assets\Services\AssetPurgeService;
-use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Support\PathResolver;
 use Atlas\Assets\Support\SortOrderResolver;
 use Atlas\Core\Providers\PackageServiceProvider;
@@ -33,7 +32,6 @@ class AtlasAssetsServiceProvider extends PackageServiceProvider
             'atlas-assets'
         );
 
-        $this->app->bind(ConfigValidator::class, static fn () => new ConfigValidator);
         $this->app->bind(PathResolver::class);
         $this->app->bind(SortOrderResolver::class);
         $this->app->bind(AssetFileService::class);

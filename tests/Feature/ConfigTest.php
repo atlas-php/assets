@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Tests\Feature;
 
-use Atlas\Assets\Support\ConfigValidator;
 use Atlas\Assets\Tests\TestCase;
-use InvalidArgumentException;
 
 /**
  * Class ConfigTest
  *
- * Ensures the atlas-assets configuration defaults align with the PRD and
- * validates misconfigurations.
- * PRD Reference: Atlas Assets Overview — Configuration.
+ * Ensures the atlas-assets configuration defaults align with the PRD.
+ * PRD Reference: Atlas Assets Overview — Configuration defaults.
  */
 final class ConfigTest extends TestCase
 {
@@ -32,130 +29,5 @@ final class ConfigTest extends TestCase
         self::assertSame([], config('atlas-assets.uploads.allowed_extensions'));
         self::assertSame([], config('atlas-assets.uploads.blocked_extensions'));
         self::assertSame(10 * 1024 * 1024, config('atlas-assets.uploads.max_file_size'));
-    }
-
-    public function test_validates_configuration_when_defaults_are_used(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-        $validator->validate(config('atlas-assets'));
-
-        $this->addToAssertionCount(1);
-    }
-
-    public function test_rejects_configuration_when_disk_is_invalid(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['disk'] = '';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('disk must be defined');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_visibility_is_invalid(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['visibility'] = '';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The assets visibility must be defined.');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_path_inputs_are_invalid(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['path']['pattern'] = '';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('path pattern or resolver');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_with_invalid_placeholder(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['path']['pattern'] = '{invalid}/path';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported path placeholder');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_with_non_callable_resolver(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['path']['resolver'] = 'not-a-callable';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('path resolver must be a callable');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_upload_allowed_list_is_not_array(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['uploads']['allowed_extensions'] = 'png';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('uploads.allowed_extensions');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_upload_blocklist_has_invalid_values(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['uploads']['blocked_extensions'] = ['jpg', ''];
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('uploads.blocked_extensions entry must be a non-empty string');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_upload_max_size_is_invalid(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['uploads']['max_file_size'] = 'invalid';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('uploads.max_file_size');
-
-        $validator->validate($config);
-    }
-
-    public function test_rejects_configuration_when_upload_max_size_is_not_positive(): void
-    {
-        $validator = $this->app->make(ConfigValidator::class);
-
-        $config = config('atlas-assets');
-        $config['uploads']['max_file_size'] = 0;
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('uploads.max_file_size');
-
-        $validator->validate($config);
     }
 }
