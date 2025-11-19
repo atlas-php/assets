@@ -158,6 +158,23 @@ final class UploadGuardServiceTest extends TestCase
         self::assertTrue(true);
     }
 
+    public function test_validate_honors_stringable_configured_max_size(): void
+    {
+        config()->set('atlas-assets.uploads.max_file_size', new class implements \Stringable
+        {
+            public function __toString(): string
+            {
+                return ' 1024 ';
+            }
+        });
+
+        $file = UploadedFile::fake()->create('large.pdf', 5 * 1024, 'application/pdf');
+
+        $this->expectException(UploadSizeLimitException::class);
+
+        $this->guard()->validate($file);
+    }
+
     private function guard(): UploadGuardService
     {
         return $this->app->make(UploadGuardService::class);

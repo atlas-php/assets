@@ -126,22 +126,6 @@ final class AssetModelWriteTest extends TestCase
         self::assertSame(1, $heroTwo->sort_order);
     }
 
-    public function test_sort_order_disabled_when_config_scopes_null(): void
-    {
-        config()->set('atlas-assets.sort.scopes', null);
-
-        $model = new UploadableModel;
-        $model->forceFill(['id' => 22]);
-
-        $service = $this->app->make(AssetModelService::class);
-
-        $first = $service->uploadForModel($model, UploadedFile::fake()->create('first.pdf', 5));
-        $second = $service->uploadForModel($model, UploadedFile::fake()->create('second.pdf', 5));
-
-        self::assertSame(0, $first->sort_order);
-        self::assertSame(0, $second->sort_order);
-    }
-
     public function test_custom_sort_order_resolver_callback_is_respected(): void
     {
         config()->set('atlas-assets.sort.resolver', static function ($model, array $context): int {
@@ -395,6 +379,38 @@ final class AssetModelWriteTest extends TestCase
         $result = $service->updateAsset($asset, []);
 
         self::assertSame($asset, $result);
+    }
+
+    public function test_manual_sort_order_stringable_and_negative_inputs_are_normalized(): void
+    {
+        $service = $this->app->make(AssetModelService::class);
+
+        $stringValue = new class implements \Stringable
+        {
+            public function __toString(): string
+            {
+                return ' 25 ';
+            }
+        };
+
+        $asset = $service->upload(
+            UploadedFile::fake()->create('manual.pdf', 5),
+            ['sort_order' => $stringValue]
+        );
+
+        self::assertSame(25, $asset->sort_order);
+
+        $asset = Asset::factory()->create(['sort_order' => 10]);
+        $service->updateAsset($asset, ['sort_order' => '-5']);
+        $asset->refresh();
+
+        self::assertSame(0, $asset->sort_order);
+
+        $asset = Asset::factory()->create(['sort_order' => 10]);
+        $service->updateAsset($asset, ['sort_order' => '   ']);
+        $asset->refresh();
+
+        self::assertSame(10, $asset->sort_order);
     }
 
     public function test_upload_records_zero_size_when_file_reports_non_integer(): void

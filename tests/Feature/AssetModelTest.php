@@ -83,4 +83,50 @@ final class AssetModelTest extends TestCase
         self::assertIsString($asset->file_ext);
         self::assertTrue($asset->type === null || is_int($asset->type));
     }
+
+    public function test_has_label_category_and_owner_helpers(): void
+    {
+        $user = new class
+        {
+            public int $id = 55;
+        };
+
+        config()->set('auth.providers.users.model', $user::class);
+
+        $asset = Asset::factory()->make([
+            'label' => 'hero',
+            'category' => 'images',
+            'user_id' => 5,
+        ]);
+
+        self::assertTrue($asset->hasLabel());
+        self::assertTrue($asset->hasCategory());
+        self::assertTrue($asset->hasOwner());
+
+        $asset->label = null;
+        $asset->category = null;
+        $asset->user_id = null;
+
+        self::assertFalse($asset->hasLabel());
+        self::assertFalse($asset->hasCategory());
+        self::assertFalse($asset->hasOwner());
+    }
+
+    public function test_model_and_user_relationships_can_be_resolved(): void
+    {
+        $asset = new Asset;
+        $asset->model_type = RelationshipModel::class;
+        $asset->model_id = 1;
+
+        self::assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, $asset->model());
+        self::assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $asset->user());
+    }
+}
+
+/**
+ * @internal helper for relation tests
+ */
+class RelationshipModel extends \Illuminate\Database\Eloquent\Model
+{
+    protected $table = 'relationship_models';
 }
