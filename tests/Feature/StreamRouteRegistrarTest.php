@@ -6,92 +6,121 @@ namespace Atlas\Assets\Tests\Feature;
 
 use Atlas\Assets\Support\StreamRouteRegistrar;
 use Atlas\Assets\Tests\TestCase;
-use Illuminate\Config\Repository;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use Mockery;
 
 /**
  * Class StreamRouteRegistrarTest
  *
- * Covers the route registration helper so configurable behavior remains deterministic.
+ * Ensures the stream route registration honors configuration overrides.
  * PRD Reference: Atlas Assets Overview — Retrieval APIs.
  */
 final class StreamRouteRegistrarTest extends TestCase
 {
-    public function test_registers_default_stream_route(): void
+    public function test_register_uses_custom_configuration_values(): void
     {
-        [$router, $registrar] = $this->makeRegistrar();
-
-        $registrar->register();
-
-        $route = $this->routeByName($router, 'atlas-assets.stream');
-
-        self::assertNotNull($route);
-        self::assertSame('atlas-assets/stream/{asset}', $route?->uri());
-        self::assertSame(['signed', SubstituteBindings::class], $route?->gatherMiddleware());
-    }
-
-    public function test_register_can_be_disabled(): void
-    {
-        [$router, $registrar] = $this->makeRegistrar([
-            'routes' => [
-                'stream' => ['enabled' => false],
-            ],
+        config()->set('atlas-assets.routes.stream', [
+            'enabled' => true,
+            'uri' => new class implements \Stringable
+            {
+                public function __toString(): string
+                {
+                    return ' /custom/stream/{asset} ';
+                }
+            },
+            'name' => new class implements \Stringable
+            {
+                public function __toString(): string
+                {
+                    return ' custom.stream ';
+                }
+            },
+            'middleware' => new class implements \Stringable
+            {
+                public function __toString(): string
+                {
+                    return ' signed ';
+                }
+            },
         ]);
 
+        $router = Mockery::mock(Router::class);
+        $group = Mockery::mock();
+        $group->shouldReceive('group')
+            ->once()
+            ->andReturnUsing(function ($callback): void {
+                $callback();
+            });
+
+        $router->shouldReceive('middleware')
+            ->once()
+            ->with(['signed'])
+            ->andReturn($group);
+
+        $router->shouldReceive('get')
+            ->once()
+            ->with('custom/stream/{asset}', \Atlas\Assets\Http\Controllers\AssetStreamController::class)
+            ->andReturn(
+                Mockery::mock()->shouldReceive('name')->once()->with('custom.stream')->getMock()
+            );
+
+        $registrar = new StreamRouteRegistrar($router, $this->app->make(Repository::class));
         $registrar->register();
 
-        self::assertNull($router->getRoutes()->getByName('atlas-assets.stream'));
+        self::assertTrue(true);
     }
 
-    public function test_register_applies_custom_configuration(): void
+    public function test_register_falls_back_to_defaults_when_configuration_invalid(): void
     {
-        [$router, $registrar] = $this->makeRegistrar([
-            'routes' => [
-                'stream' => [
-                    'uri' => '/media/assets/{asset}',
-                    'name' => 'media.assets.stream',
-                    'middleware' => ['  ', null],
-                ],
-            ],
+        config()->set('atlas-assets.routes.stream', [
+            'enabled' => true,
+            'uri' => 100,
+            'name' => 200,
+            'middleware' => 5,
         ]);
 
+        $router = Mockery::mock(Router::class);
+        $group = Mockery::mock();
+        $group->shouldReceive('group')
+            ->once()
+            ->andReturnUsing(function ($callback): void {
+                $callback();
+            });
+
+        $router->shouldReceive('middleware')
+            ->once()
+            ->with(['signed', SubstituteBindings::class])
+            ->andReturn($group);
+
+        $router->shouldReceive('get')
+            ->once()
+            ->with('atlas-assets/stream/{asset}', \Atlas\Assets\Http\Controllers\AssetStreamController::class)
+            ->andReturn(
+                Mockery::mock()->shouldReceive('name')->once()->with('atlas-assets.stream')->getMock()
+            );
+
+        $registrar = new StreamRouteRegistrar($router, $this->app->make(Repository::class));
         $registrar->register();
 
-        $route = $this->routeByName($router, 'media.assets.stream');
-
-        self::assertNotNull($route);
-        self::assertSame('media/assets/{asset}', $route?->uri());
-        self::assertSame(['signed', SubstituteBindings::class], $route?->gatherMiddleware());
+        self::assertTrue(true);
     }
 
-    /**
-     * @param  array<string, mixed>  $overrides
-     * @return array{Router, StreamRouteRegistrar}
-     */
-    private function makeRegistrar(array $overrides = []): array
+    public function test_register_respects_disabled_configuration(): void
     {
-        $router = new Router($this->app['events'], $this->app);
-
-        /** @var array<string, mixed> $baseConfig */
-        $baseConfig = config('atlas-assets');
-
-        $config = new Repository([
-            'atlas-assets' => array_replace_recursive($baseConfig, $overrides),
+        config()->set('atlas-assets.routes.stream', [
+            'enabled' => false,
+            'uri' => 'disabled/stream',
         ]);
 
-        return [$router, new StreamRouteRegistrar($router, $config)];
-    }
+        $router = Mockery::mock(Router::class);
+        $router->shouldReceive('middleware')->never();
+        $router->shouldReceive('get')->never();
 
-    private function routeByName(Router $router, string $name): ?Route
-    {
-        $routes = $router->getRoutes();
+        $registrar = new StreamRouteRegistrar($router, $this->app->make(Repository::class));
+        $registrar->register();
 
-        if (method_exists($routes, 'refreshNameLookups')) {
-            $routes->refreshNameLookups();
-        }
-
-        return $routes->getByName($name);
+        self::assertTrue(true);
     }
 }
