@@ -10,15 +10,13 @@ Static facade backed by the service container.
 
 | Method                                                                                                   | Description                                                                                                                       |
 |----------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                              | Proxy to `AssetService::upload`. Stores a new asset without a model context.                                                     |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                        | Proxy to `AssetService::uploadForModel`. Stores an asset bound to a model.                                                       |
-| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset`  | Proxy to `AssetService::update`. Updates metadata and optionally replaces the stored file and/or model association.              |
-| `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`         | Proxy to `AssetService::replace`. Convenience wrapper around `update()` with a new file.                                         |
+| `upload(UploadedFile $file, array $attributes = []): Asset`                                              | Proxy to `AssetModelService::upload`. Stores a new asset without a model context.                                                |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                        | Proxy to `AssetModelService::uploadForModel`. Stores an asset bound to a model.                                                  |
+| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset`  | Proxy to `AssetModelService::updateAsset`. Updates metadata and optionally replaces the stored file and/or model association.    |
+| `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`         | Proxy to `AssetModelService::replaceAsset`. Convenience wrapper around `update()` with a new file.                               |
 | `find(int|string $id): ?Asset`                                                                           | Proxy to `AssetModelService::find`. Fetches an asset by primary key.                                                             |
 | `forModel(Model $model, array $filters = [], ?int $limit = null): Builder`                               | Proxy to `AssetModelService::forModel`. Returns a builder scoped to a model with optional filters and limit.                     |
 | `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                          | Proxy to `AssetModelService::forUser`. Returns a builder scoped to a user id with optional filters and limit.                    |
-| `listForModel(Model $model, array $filters = [], ?int $limit = null): Builder`                           | Alias of `AssetModelService::forModel`. Lets consumers choose `get()`, `paginate()`, `cursorPaginate()`, etc.                   |
-| `listForUser(int|string $userId, array $filters = [], ?int $limit = null): Builder`                      | Alias of `AssetModelService::forUser`. Returns a user-scoped builder for further constraints.                                    |
 | `download(Asset $asset): string`                                                                         | Proxy to `AssetFileService::download`. Reads file contents from storage.                                                         |
 | `exists(Asset $asset): bool`                                                                             | Proxy to `AssetFileService::exists`. Checks if the file exists on the configured disk.                                           |
 | `temporaryUrl(Asset $asset, int $minutes = 5): string`                                                   | Proxy to `AssetFileService::temporaryUrl`. Returns a temporary URL or signed route URL.                                          |
@@ -26,17 +24,6 @@ Static facade backed by the service container.
 | `purge(): int`                                                                                           | Proxy to `AssetPurgeService::purge`. Permanently deletes all soft-deleted assets and their files, returning the count.         |
 
 ## Services
-
-### `Atlas\Assets\Services\AssetService`
-
-Handles uploads, replacements, and metadata updates.
-
-| Method                                                                                                  | Description                                                                                                                                                                                                                                      |
-|---------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `upload(UploadedFile $file, array $attributes = []): Asset`                                             | Stores a new asset without a model context. Attributes may include `group_id`, `user_id`, `label`, `category`, `type` (unsigned tinyint/backed enum value), `sort_order`, optional `name`, plus upload overrides like `allowed_extensions` and `max_upload_size` (bytes or `null`).   |
-| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset`                       | Stores an asset tied to a model with the same attribute support (`group_id`, `user_id`, `label`, `category`, `type`), `sort_order`, `name`, `allowed_extensions`, `max_upload_size`). Polymorphic columns are filled from the model.             |
-| `update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file and/or re-associates the asset to a new model. Maintains `original_file_name`, updates `file_mime_type`, `file_ext`, `file_path`, and can recalculate or respect explicit `sort_order`. |
-| `replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset`        | Convenience wrapper around `update()` that always includes a new file. When paths change, displaced files are removed according to configuration.                                                                                               |
 
 ### `Atlas\Assets\Services\AssetPurgeService`
 
@@ -54,6 +41,10 @@ Shared CRUD layer for the `Asset` model that now also orchestrates file cleanup 
 |--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `query(): Builder<Asset>`                  | Returns a builder for raw queries.                                                                                                                         |
 | `create(array $data): Asset`               | Creates a record with the provided attributes.                                                                                                             |
+| `upload(UploadedFile $file, array $attributes = []): Asset` | Persists a new asset without a model context, handling validation, storage, metadata normalization, and sort order selection.                              |
+| `uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset` | Persists a new asset that is scoped to a model.                                                                                                            |
+| `updateAsset(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset` | Updates metadata and optionally replaces the stored file, including model reassignment.                                                                    |
+| `replaceAsset(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset` | Convenience wrapper around `updateAsset()` when swapping the file.                                                                                        |
 | `forModel(Model $model, array $filters = [], ?int $limit = null): Builder` | Returns a builder scoped to the supplied model, ready for `get()`, `paginate()`, or `cursorPaginate()`.                                                    |
 | `forUser(int|string $userId, array $filters = [], ?int $limit = null): Builder` | Returns a builder scoped to a user identifier with optional filters.                                                                                       |
 | `buildModelQuery(Model $model, array $filters = []): Builder` | Lower-level helper for custom constraints when building model-scoped queries.                                                                              |

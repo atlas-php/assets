@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Atlas\Assets\Support;
 
-use Atlas\Assets\Services\AssetModelService;
+use Atlas\Assets\Models\Asset;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,10 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SortOrderResolver
 {
-    public function __construct(
-        private readonly Repository $config,
-        private readonly AssetModelService $assetModelService,
-    ) {}
+    public function __construct(private readonly Repository $config) {}
 
     /**
      * Determine the next sort order value using the configured strategy.
@@ -51,7 +48,7 @@ class SortOrderResolver
             return null;
         }
 
-        $query = $this->assetModelService->query();
+        $query = Asset::query();
 
         foreach ($scopes as $column) {
             $value = $context[$column] ?? null;

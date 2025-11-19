@@ -7,7 +7,7 @@ namespace Atlas\Assets\Tests\Feature;
 use Atlas\Assets\Exceptions\DisallowedExtensionException;
 use Atlas\Assets\Exceptions\UploadSizeLimitException;
 use Atlas\Assets\Models\Asset;
-use Atlas\Assets\Services\AssetService;
+use Atlas\Assets\Services\AssetModelService;
 use Atlas\Assets\Tests\TestCase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,12 +17,12 @@ use Mockery;
 use RuntimeException;
 
 /**
- * Class AssetServiceTest
+ * Class AssetModelWriteTest
  *
- * Exercises upload and update flows for Atlas Assets.
+ * Exercises upload and update flows for Atlas Assets via the AssetModelService.
  * PRD Reference: Atlas Assets Overview — Uploading & Updating.
  */
-final class AssetServiceTest extends TestCase
+final class AssetModelWriteTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -39,7 +39,7 @@ final class AssetServiceTest extends TestCase
         Storage::fake('shared-disk');
         config()->set('atlas-assets.disk', 'shared-disk');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $asset = $service->upload(UploadedFile::fake()->create('Shared.txt', 1));
 
@@ -52,7 +52,7 @@ final class AssetServiceTest extends TestCase
 
         $file = UploadedFile::fake()->create('Document.pdf', 120, 'application/pdf');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->upload($file, ['user_id' => 10, 'group_id' => 44, 'label' => 'contract', 'type' => TestAssetType::Hero]);
 
         Storage::disk('s3')->assertExists($asset->file_path);
@@ -75,7 +75,7 @@ final class AssetServiceTest extends TestCase
         $model = new UploadableModel;
         $model->forceFill(['id' => 321]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $first = $service->uploadForModel($model, UploadedFile::fake()->create('first.pdf', 5));
         $second = $service->uploadForModel($model, UploadedFile::fake()->create('second.pdf', 5));
 
@@ -87,7 +87,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.sort.scopes', ['group_id']);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $first = $service->upload(UploadedFile::fake()->create('first.pdf', 5), ['group_id' => 50]);
         $second = $service->upload(UploadedFile::fake()->create('second.pdf', 5), ['group_id' => 50]);
@@ -100,7 +100,7 @@ final class AssetServiceTest extends TestCase
 
     public function test_upload_respects_manual_sort_order_attribute(): void
     {
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $asset = $service->upload(
             UploadedFile::fake()->create('manual.pdf', 5),
@@ -115,7 +115,7 @@ final class AssetServiceTest extends TestCase
         $model = new UploadableModel;
         $model->forceFill(['id' => 8]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $hero = $service->uploadForModel($model, UploadedFile::fake()->create('hero.pdf', 5), ['type' => TestAssetType::Hero]);
         $thumb = $service->uploadForModel($model, UploadedFile::fake()->create('thumb.pdf', 5), ['type' => TestAssetType::Thumbnail]);
@@ -133,7 +133,7 @@ final class AssetServiceTest extends TestCase
         $model = new UploadableModel;
         $model->forceFill(['id' => 22]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $first = $service->uploadForModel($model, UploadedFile::fake()->create('first.pdf', 5));
         $second = $service->uploadForModel($model, UploadedFile::fake()->create('second.pdf', 5));
@@ -149,7 +149,7 @@ final class AssetServiceTest extends TestCase
         });
 
         try {
-            $service = $this->app->make(AssetService::class);
+            $service = $this->app->make(AssetModelService::class);
 
             $asset = $service->upload(
                 UploadedFile::fake()->create('callback.pdf', 5),
@@ -168,7 +168,7 @@ final class AssetServiceTest extends TestCase
 
         $file = UploadedFile::fake()->create('Loose.txt', 5, 'text/plain');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->upload($file);
 
         Storage::disk('s3')->assertExists($asset->file_path);
@@ -180,7 +180,7 @@ final class AssetServiceTest extends TestCase
         $longName = str_repeat('a', 260).'.pdf';
         $file = UploadedFile::fake()->create($longName, 10, 'application/pdf');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->upload($file);
 
         self::assertSame(255, strlen($asset->original_file_name));
@@ -189,7 +189,7 @@ final class AssetServiceTest extends TestCase
 
     public function test_upload_throws_when_file_stream_cannot_open(): void
     {
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $file = Mockery::mock(UploadedFile::class);
         $file->shouldReceive('getRealPath')->andReturn('');
@@ -212,7 +212,7 @@ final class AssetServiceTest extends TestCase
         $model = new UploadableModel;
         $model->forceFill(['id' => 77]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->uploadForModel(
             $model,
             UploadedFile::fake()->image('avatar.png', 200, 200),
@@ -230,7 +230,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.path.resolver', static fn () => 'custom/path/report.txt');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->upload(UploadedFile::fake()->create('ignored.txt', 5));
 
         Storage::disk('s3')->assertExists('custom/path/report.txt');
@@ -249,8 +249,8 @@ final class AssetServiceTest extends TestCase
             'sort_order' => 0,
         ]);
 
-        $service = $this->app->make(AssetService::class);
-        $service->update($asset, [
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, [
             'name' => 'New Name',
             'label' => 'hero',
             'category' => 'images',
@@ -272,7 +272,7 @@ final class AssetServiceTest extends TestCase
 
     public function test_type_accepts_numeric_string_values(): void
     {
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $asset = $service->upload(
             UploadedFile::fake()->create('numeric.pdf', 5),
@@ -286,8 +286,8 @@ final class AssetServiceTest extends TestCase
     {
         $asset = Asset::factory()->create(['sort_order' => 0]);
 
-        $service = $this->app->make(AssetService::class);
-        $service->update($asset, ['sort_order' => 42]);
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, ['sort_order' => 42]);
 
         $asset->refresh();
 
@@ -300,8 +300,8 @@ final class AssetServiceTest extends TestCase
             'group_id' => null,
         ]);
 
-        $service = $this->app->make(AssetService::class);
-        $service->update($asset, ['group_id' => 99]);
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset($asset, ['group_id' => 99]);
 
         $asset->refresh();
 
@@ -315,10 +315,10 @@ final class AssetServiceTest extends TestCase
             'original_file_name' => 'old.pdf',
         ]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $longString = str_repeat('b', 300);
-        $service->update($asset, [
+        $service->updateAsset($asset, [
             'name' => $longString,
             'label' => $longString,
             'category' => $longString,
@@ -346,8 +346,8 @@ final class AssetServiceTest extends TestCase
 
         Storage::disk('s3')->put('files/old.doc', 'old');
 
-        $service = $this->app->make(AssetService::class);
-        $service->update(
+        $service = $this->app->make(AssetModelService::class);
+        $service->updateAsset(
             $asset,
             ['label' => 'updated'],
             UploadedFile::fake()->create('New.pdf', 200, 'application/pdf')
@@ -373,12 +373,12 @@ final class AssetServiceTest extends TestCase
         $newModel = new UploadableModel;
         $newModel->forceFill(['id' => 25]);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->uploadForModel($initialModel, UploadedFile::fake()->create('old.txt', 10));
 
         $originalPath = $asset->file_path;
 
-        $service->update(
+        $service->updateAsset(
             $asset,
             [],
             UploadedFile::fake()->create('updated.txt', 5),
@@ -407,8 +407,8 @@ final class AssetServiceTest extends TestCase
 
         Storage::disk('s3')->put('files/old.doc', 'old');
 
-        $service = $this->app->make(AssetService::class);
-        $service->replace(
+        $service = $this->app->make(AssetModelService::class);
+        $service->replaceAsset(
             $asset,
             UploadedFile::fake()->create('Newest.doc', 50, 'application/msword'),
             ['name' => 'Newest.doc']
@@ -436,8 +436,8 @@ final class AssetServiceTest extends TestCase
         $model = new UploadableModel;
         $model->forceFill(['id' => 99]);
 
-        $service = $this->app->make(AssetService::class);
-        $service->replace(
+        $service = $this->app->make(AssetModelService::class);
+        $service->replaceAsset(
             $asset,
             UploadedFile::fake()->create('Newest.doc', 50, 'application/msword'),
             ['name' => 'Newest.doc'],
@@ -468,8 +468,8 @@ final class AssetServiceTest extends TestCase
 
             Storage::disk('s3')->put('files/shared.doc', 'old');
 
-            $service = $this->app->make(AssetService::class);
-            $service->update($asset, [], UploadedFile::fake()->create('Shared.doc', 50));
+            $service = $this->app->make(AssetModelService::class);
+            $service->updateAsset($asset, [], UploadedFile::fake()->create('Shared.doc', 50));
 
             $asset->refresh();
 
@@ -484,7 +484,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.path.resolver', static fn () => 'fixed/path.txt');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $service->upload(UploadedFile::fake()->create('first.txt', 1));
 
         $this->expectException(\InvalidArgumentException::class);
@@ -506,18 +506,18 @@ final class AssetServiceTest extends TestCase
 
         config()->set('atlas-assets.path.resolver', static fn () => 'conflict/path.doc');
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $this->expectException(\InvalidArgumentException::class);
 
-        $service->update($asset, [], UploadedFile::fake()->create('new.doc', 1));
+        $service->updateAsset($asset, [], UploadedFile::fake()->create('new.doc', 1));
     }
 
     public function test_upload_rejects_extension_not_in_whitelist(): void
     {
         config()->set('atlas-assets.uploads.allowed_extensions', ['pdf', 'docx']);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $this->expectException(DisallowedExtensionException::class);
         $this->expectExceptionMessage('not allowed by the configured whitelist');
@@ -529,7 +529,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.uploads.blocked_extensions', ['png']);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $this->expectException(DisallowedExtensionException::class);
         $this->expectExceptionMessage('blocked for asset uploads');
@@ -541,7 +541,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.uploads.allowed_extensions', ['pdf']);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
         $asset = $service->upload(
             UploadedFile::fake()->image('photo.png'),
             ['allowed_extensions' => ['png']]
@@ -555,7 +555,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.uploads.blocked_extensions', ['png']);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $this->expectException(DisallowedExtensionException::class);
         $this->expectExceptionMessage('blocked for asset uploads');
@@ -568,7 +568,7 @@ final class AssetServiceTest extends TestCase
 
     public function test_upload_rejects_files_that_exceed_configured_size_limit(): void
     {
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $this->expectException(UploadSizeLimitException::class);
         $this->expectExceptionMessage('maximum allowed size');
@@ -578,7 +578,7 @@ final class AssetServiceTest extends TestCase
 
     public function test_upload_allows_increasing_size_limit_per_call(): void
     {
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $asset = $service->upload(
             UploadedFile::fake()->create('large.pdf', 15 * 1024, 'application/pdf'),
@@ -593,7 +593,7 @@ final class AssetServiceTest extends TestCase
     {
         config()->set('atlas-assets.uploads.max_file_size', 1024);
 
-        $service = $this->app->make(AssetService::class);
+        $service = $this->app->make(AssetModelService::class);
 
         $asset = $service->upload(
             UploadedFile::fake()->create('huge.pdf', 20 * 1024, 'application/pdf'),

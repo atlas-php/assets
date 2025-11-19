@@ -7,6 +7,7 @@ namespace Atlas\Assets\Services;
 use Atlas\Assets\Models\Asset;
 use Atlas\Assets\Support\DiskResolver;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
 use RuntimeException;
@@ -21,6 +22,29 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class AssetFileService
 {
     public function __construct(private readonly DiskResolver $diskResolver) {}
+
+    public function storeUploadedFile(UploadedFile $file, string $path, string $visibility): void
+    {
+        $realPath = $file->getRealPath();
+
+        if (! is_string($realPath) || $realPath === '') {
+            throw new RuntimeException('Failed to open uploaded file stream.');
+        }
+
+        $stream = fopen($realPath, 'rb');
+
+        if ($stream === false) {
+            throw new RuntimeException('Failed to open uploaded file stream.');
+        }
+
+        $disk = $this->disk();
+
+        try {
+            $disk->put($path, $stream, ['visibility' => $visibility]);
+        } finally {
+            fclose($stream);
+        }
+    }
 
     public function download(Asset $asset): string
     {

@@ -160,19 +160,6 @@ Reset:
 ```
 
 ## Services
-### AssetService
-Handles all write operations:
-- `upload()`
-- `uploadForModel()`
-- `update()`
-- `replace()`
-
-Supports per‑call overrides for:
-- allowed extensions
-- blocklist
-- size limits
-- custom sort order
-
 ### AssetModelService (Read helpers)
 Handles reads and scoped builders:
 - `find()`

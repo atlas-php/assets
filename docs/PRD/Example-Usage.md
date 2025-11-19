@@ -104,7 +104,7 @@ $asset = Assets::upload($request->file('archive'), [
 ```php
 use Atlas\Assets\Facades\Assets;
 
-$assets = Assets::listForModel($post)->get();
+$assets = Assets::forModel($post)->get();
 ```
 
 Or use fluent aliases that keep the builder fluent:
@@ -120,7 +120,7 @@ With filters and limits:
 ```php
 use Atlas\Assets\Facades\Assets;
 
-$images = Assets::listForModel($post, [
+$images = Assets::forModel($post, [
     'label' => 'featured',
 ])->limit(3)->get();
 ```
@@ -129,7 +129,7 @@ $images = Assets::listForModel($post, [
 ```php
 use Atlas\Assets\Facades\Assets;
 
-$userAssets = Assets::listForUser(auth()->id(), [
+$userAssets = Assets::forUser(auth()->id(), [
     'category' => 'documents',
 ])->get();
 

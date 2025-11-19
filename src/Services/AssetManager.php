@@ -19,7 +19,6 @@ use Illuminate\Http\UploadedFile;
 class AssetManager
 {
     public function __construct(
-        private readonly AssetService $assetService,
         private readonly AssetModelService $assetModelService,
         private readonly AssetFileService $assetFileService,
         private readonly AssetPurgeService $assetPurgeService,
@@ -30,7 +29,7 @@ class AssetManager
      */
     public function upload(UploadedFile $file, array $attributes = []): Asset
     {
-        return $this->assetService->upload($file, $attributes);
+        return $this->assetModelService->upload($file, $attributes);
     }
 
     /**
@@ -38,7 +37,7 @@ class AssetManager
      */
     public function uploadForModel(Model $model, UploadedFile $file, array $attributes = []): Asset
     {
-        return $this->assetService->uploadForModel($model, $file, $attributes);
+        return $this->assetModelService->uploadForModel($model, $file, $attributes);
     }
 
     /**
@@ -48,7 +47,7 @@ class AssetManager
      */
     public function update(Asset $asset, array $attributes = [], ?UploadedFile $file = null, ?Model $model = null): Asset
     {
-        return $this->assetService->update($asset, $attributes, $file, $model);
+        return $this->assetModelService->updateAsset($asset, $attributes, $file, $model);
     }
 
     /**
@@ -58,7 +57,7 @@ class AssetManager
      */
     public function replace(Asset $asset, UploadedFile $file, array $attributes = [], ?Model $model = null): Asset
     {
-        return $this->assetService->replace($asset, $file, $attributes, $model);
+        return $this->assetModelService->replaceAsset($asset, $file, $attributes, $model);
     }
 
     public function find(int|string $id): ?Asset
