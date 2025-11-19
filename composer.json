@@ -7,7 +7,7 @@
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0",
         "illuminate/filesystem": "^10.0|^11.0",
-        "atlas-php/core": "dev-main"
+        "atlas-php/core": "^0.2.0|dev-main"
     },
     "require-dev": {
         "laravel/pint": "^1.15",
