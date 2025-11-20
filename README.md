@@ -243,7 +243,7 @@ Reset to pattern behavior:
 - [Install Guide](./docs/Install.md)
 
 ## Contributing
-See the [Contributing Guide](./CONTRIBUTING.md).
+See the [Contributing Guide](.github/CONTRIBUTING.md).
 
 ## License
 MIT — see [LICENSE](./LICENSE).
